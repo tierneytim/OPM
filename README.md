@@ -392,7 +392,7 @@ D = spm_eeg_bc(S);
 ## Simulation
 
 
-
+<a name="c1"></a>
 ### MNI Space
 If you want to simulate MEG data you need to supply sensor positions and  orientations which should be in the same coordinate space as some brain image. If you don not have a brain image or sensor positions(and orientations) you can simulate data on an average template brain with automatically generated positions of fixed spacing using `spm_opm_create`. The following code snippet automatically generates sensors in this average space that are a fixed `space` apart. In this case the spacing is 15mm.
 
@@ -408,7 +408,7 @@ Once you run this code you will generate a figure like this.
 </p>
 
 
-
+<a name="c2"></a>
 ### Whole-Head MNI space
 For some simulations you may want the entire scalp surface to be covered. In this case you just need to set the `wholehead` flag to 1.
 ```matlab
@@ -423,7 +423,7 @@ Running this code snippet should generate a figure like this.
 <img src="readme/mni15Whole.PNG" width="600"/>
 </p>
 
-
+<a name="c3"></a>
 ### Individual Subject
 In some cases you may have already have an individual brain image that you want to simulate data in but no positions or orientations. In this case you just need  to give your desired sensor spacing with the `space` argument and the filepath to an MRI file with the `sMRI` argument. The slightly different orientation of this brain is due to the fact that this brain is not in the MNI space.
 
@@ -438,6 +438,7 @@ D = spm_opm_create(S);
 <img src="readme/native15.PNG" width="600" height="452"/>
 </p>
 
+<a name="c4"></a>
 ### Individual subject with fixed sensor positions
 If you already have positions and orientations for a certain brain image this can be accounted for as well. This information can be supplied in the form of a tab-delimited text file where the first six columns give position and orientation(x,y,z,x,y,z) and the final column gives a label for the sensor. 
 The code to incorporate this information just requires to specify the `pos argument 
@@ -452,7 +453,7 @@ D = spm_opm_create(S);
 <img src="readme/coregSensors.PNG" width="600"/>
 </p>
 
-
+<a name="c5"></a>
 ### Individual Subject with Custom Cortical Mesh
 Other times you may not wish to use the default meshes supplied by SPM and may wish to provide custom meshes. This is easily done with the `cortex` argument. Any mesh can be supplied but it is up to the user to ensure the meshes are in the same coordinate  space.
  ```matlab
