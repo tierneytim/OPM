@@ -435,7 +435,7 @@ D = spm_opm_create(S);
 ```
 
 <p align="center">
-<img src="readme/native15.PNG" width="600" height="664"/>
+<img src="readme/native15.PNG" width="600" height="452"/>
 </p>
 
 ### Individual subject with fixed sensor positions
