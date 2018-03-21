@@ -5,3 +5,4 @@ testData/*.nii
 testData/*.lvm
 testScripts/*.asv
 *.asv
+!testData/testCustom.gii
