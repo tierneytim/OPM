@@ -91,7 +91,7 @@ The simplest way to create an MEG object is to supply data in a matrix form to t
 </p>
 
 <p align="center">
-![pos](readme/pinoutExample.png)
+<img src="readme/pinoutExample.png" width="600"/>
 </p>
 
 <p align="justify">
