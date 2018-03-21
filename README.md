@@ -315,7 +315,7 @@ Coming soon!
 
 Here we put all the steps together into 1 script for you to try out.
 
-``` 
+```matlab
 %% Housekeeping
 clear all
 addpath('spm12')
