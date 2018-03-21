@@ -465,7 +465,7 @@ D = spm_opm_create(S);
 ```
 
 <p align="center">
-<img src="readme/dragonNative.PNG" width="600" height="368" />
+<img src="readme/dragonNative.PNG" width="600" height="449" />
 <p>
 
 <a name="g"></a>

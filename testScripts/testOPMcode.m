@@ -84,3 +84,9 @@ S =[];
 S.pos = 'SEF_coarse';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
+%% Simulation: individual - custom mesh
+S =[];
+S.space = 15;
+S.cortex='testCustom.gii';
+S.sMRI= 'msMQ0484_orig.img';
+D = spm_opm_create(S);
