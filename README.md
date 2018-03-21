@@ -94,7 +94,7 @@ To locate the source of the neural activity we need to know where these sensors 
 
 
 <p align="center">
-<img src="readme/scannerCast.jpg" width="600"/>
+<img src="readme/scannerCast.JPG" width="600"/>
 </p>
 
 The way we get this information into SPM is by using another another `tab delimted .txt file` which is also suppled to `spm_opm_create` as an argument. This file contains 7 Columns. The first six columns provide position(x,y,z) and orientation(x,y,z) Information in the world space of some brain image. The last column gives the label of each individual slot. This text file should look something like this when properly formatted.
