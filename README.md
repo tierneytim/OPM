@@ -429,13 +429,13 @@ In some cases you may have already have an individual brain image that you want 
 
 ```matlab
 S =[];
-S.space = 25;
-S.sMRI= 'msMQ0484_orig';
-D = spm_opm_create(S););
+S.space = 15;
+S.sMRI= 'msMQ0484_orig.img';
+D = spm_opm_create(S);
 ```
 
 <p align="center">
-<img src="readme/native15.PNG" width="600"/>
+<img src="readme/native15.PNG" width="600" height="664"/>
 </p>
 
 ### Individual subject with fixed sensor positions
@@ -444,8 +444,8 @@ The code to incorporate this information just requires to specify the `pos argum
 
 ```matlab
 S =[];
-S.pos = 'SB_headcast';
-S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
+S.pos = 'SEF_coarse';
+S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
 <p align="center">
@@ -454,16 +454,14 @@ D = spm_opm_create(S);
 
 
 ### Individual Subject with Custom Cortical Mesh
-Other times you may not wish to use the default meshes supplied by SPM and may wish
-to provide custom meshes. This is easily done with the `cortex` argument. Any mesh
-can be supplied but it is up to the user to ensure the meshes are in the same coordiante 
-space.
+Other times you may not wish to use the default meshes supplied by SPM and may wish to provide custom meshes. This is easily done with the `cortex` argument. Any mesh can be supplied but it is up to the user to ensure the meshes are in the same coordinate  space.
  ```matlab
 S =[];
-S.space = 25;
+S.space = 15;
 S.cortex='testCustom.gii';
-S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
+S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
+
 ```
 
 <p align="center">

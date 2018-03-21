@@ -64,5 +64,23 @@ S=[];
 S.D=D;
 S.timewin=[-100 -20];
 D = spm_eeg_bc(S);
+%% Simulation: half-head
+S =[];  
+S.space = 15;  
+D = spm_opm_create(S);  
+%% Simulation: whole-head
+S =[];
+S.space = 15;
+S.wholehead=1;
+D = spm_opm_create(S);
 
-
+%% Simulation: individual
+S =[];
+S.space = 15;
+S.sMRI= 'msMQ0484_orig.img';
+D = spm_opm_create(S);
+%% Simulation: individual- supplied positions
+S =[];
+S.pos = 'SEF_coarse';
+S.sMRI= 'msMQ0484_orig.img';
+D = spm_opm_create(S);
