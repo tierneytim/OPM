@@ -410,8 +410,7 @@ Once you run this code you will generate a figure like this.
 
 
 ### Whole-Head MNI space
-For some simulations you may want the entire scalp surface to be covered. In this
-case you just need to set the `wholehead` flag to 1.
+For some simulations you may want the entire scalp surface to be covered. In this case you just need to set the `wholehead` flag to 1.
 ```matlab
 S =[];
 S.space = 15;
@@ -426,17 +425,13 @@ Running this code snippet should generate a figure like this.
 
 
 ### Individual Subject
-In some cases you may have already have an individual brain image that you want 
-to simulate data in but no positions or orientations. In this case you just need 
-to give your desired sensor spacing with the `space` argument and the filepath to
-an MRI file with the `sMRI` argument. The slightly different orientation of this 
-brain is due to the fact that this brain is not in the MNI space.
+In some cases you may have already have an individual brain image that you want to simulate data in but no positions or orientations. In this case you just need  to give your desired sensor spacing with the `space` argument and the filepath to an MRI file with the `sMRI` argument. The slightly different orientation of this brain is due to the fact that this brain is not in the MNI space.
 
 ```matlab
 S =[];
 S.space = 25;
-S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
-D = spm_opm_create(S);
+S.sMRI= 'msMQ0484_orig';
+D = spm_opm_create(S););
 ```
 
 <p align="center">
@@ -444,10 +439,8 @@ D = spm_opm_create(S);
 </p>
 
 ### Individual subject with fixed sensor positions
-If you already have positions and orientations for a certain brain image this can be accounted for as well. This information can be supplied in the form of a tab-delimited text file where the first six columns give position and orientation(x,y,z,x,y,z) and the final column gives a label for the sensor. The text file should look something like this when opened in a text editor.
-
-
-The code to incorporate this information just requires to specify the `pos` argument 
+If you already have positions and orientations for a certain brain image this can be accounted for as well. This information can be supplied in the form of a tab-delimited text file where the first six columns give position and orientation(x,y,z,x,y,z) and the final column gives a label for the sensor. 
+The code to incorporate this information just requires to specify the `pos argument 
 
 ```matlab
 S =[];
@@ -456,7 +449,7 @@ S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
 D = spm_opm_create(S);
 ```
 <p align="center">
-<img src="readme/givenSensors.PNG" width="600"/>
+<img src="readme/coregSensors.PNG" width="600"/>
 </p>
 
 
