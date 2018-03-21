@@ -394,13 +394,8 @@ D = spm_eeg_bc(S);
 
 
 ### MNI Space
-If you want to simulate MEG data you need to supply sensor positions and 
-orientations which should be in the same coordinate space as some brain image.
-If you don not have a brain image or sensor positions and orientations 
-you can simulate data in an average template with automattically generated positions
-of fixed spacingusing `spm_opm_create`. The following code snippet automatically 
-generates sensors in this average space that are a fixed `space` apart. 
-In this case the spacing is 15mm.
+If you want to simulate MEG data you need to supply sensor positions and  orientations which should be in the same coordinate space as some brain image. If you don not have a brain image or sensor positions(and orientations) you can simulate data on an average template brain with automatically generated positions of fixed spacing using `spm_opm_create`. The following code snippet automatically generates sensors in this average space that are a fixed `space` apart. In this case the spacing is 15mm.
+
 ```matlab
 S =[];  
 S.space = 15;  
@@ -409,7 +404,7 @@ D = spm_opm_create(S);
 Once you run this code you will generate a figure like this. 
 
 <p align="center">
-<img src="readme/mni15.PNG" width="600"/>
+<img src="readme/mni15.png" width="600"/>
 </p>
 
 
@@ -449,15 +444,8 @@ D = spm_opm_create(S);
 </p>
 
 ### Individual subject with fixed sensor positions
-If you already have positions and orientations for a certain brain image this can 
-be accounted for as well. This information can be supplied in hte form of a  tab-delimited
-text file where the first six columns give position and orientation(x,y,z,x,y,z) 
-and the final column gives a label for the sensor. The text file should look something 
-like this when opened in a text editor.
+If you already have positions and orientations for a certain brain image this can be accounted for as well. This information can be supplied in the form of a tab-delimited text file where the first six columns give position and orientation(x,y,z,x,y,z) and the final column gives a label for the sensor. The text file should look something like this when opened in a text editor.
 
-<p align="center">
-![pos](readme/posExample.png)
-</p>
 
 The code to incorporate this information just requires to specify the `pos` argument 
 
