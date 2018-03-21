@@ -64,8 +64,7 @@ However, before you run this code you should know that it is licensed under a GN
 <a name="b1"></a>
 ### Reading Labview Files 
 
-While OPM data may come in many native formats currently the UCL/UoN native file format is a `labview text file` format. As such a helper funciton to read these Labview files is provided. If any other file format is used the user needs to write a read function that will read this file into a matrix in Matlab. The function has a number of arguments that need to be changed depending on the file format.  The `S.nchannels` argument specifies the number of columns in the `labview file`. The `S.headerlength` argument specifies the the number of lines of text that contain header information. The `S.timeind` argument specifies the index of the time variable. If there is no time variable set this value as 0.
-
+While OPM data may come in many native formats currently the UCL/UoN native file format is a `labview text file` format. As such a helper funciton to read these Labview files is provided. If any other file format is used the user needs to write a read function that will read this file into a matrix in Matlab. The function has a number of arguments that need to be changed depending on the file format.  The `S.nchannels` argument specifies the number of columns in the `labview file`. The `S.headerlength` argument specifies the the number of lines of text that contain header information. The `S.timeind` argument specifies the index of the time variable. If there is no time variable set this value as 0. Triggers embedded in the labview file can be interpreted in 2 ways. the triggers can be interpreted as binary in which case the channels identified by `S.binaryTriggerInds` are simply thresholded using `S.trigThresh` and returned in the `lbv` object. The other option is to interpret the triggers identified by `S.decimalTriggerInds` as decimal. This means that the function will attempt to combine these triggers in such a way to allow for values other than 1 or 0. One final point to note is that this function natively accepts `.lvm` files or zipped `.lvm` files. Running the code snippet bellow will return  a labview struct: `lbv` which contains all data and triggers. 
 
 ```matlab
 S = [];
@@ -84,7 +83,7 @@ lbv = spm_opm_read_lvm(S);
 ### Converting Raw Data
 
 
-The simplest way to create an MEG object is to supply data in a matrix form to the function `spm_opm_create`. However, there is a lot of metadata that needs to be supplied in order to create a fully compliant SPM MEEG object. In the first instance we need to know what channels are contained in the B matrix. This is indicated by the use of a `pinout` file which is a  `tab delimted.txt file`. This file is supplied as an argument to `spm_opm_create`. This file  contains the labels of the OPM sensors in the second column and the column number of the `B` matrix in which this data are stored in the first column. A properly formatted `pinout` file should look like this when viewed in a text editor.
+The simplest way to create an MEG object is to supply data in a matrix form to the function `spm_opm_create`. However, there is a lot of metadata that needs to be supplied in order to create a fully compliant SPM MEEG object. In the first instance we need to know what channels are contained in the `lbv.B` matrix. This is indicated by the use of a `pinout` file which is a  `tab delimted.txt file`. This file is supplied as an argument to `spm_opm_create`. This file  contains the labels of the OPM sensors in the second column and the column number of the `lbv.B` matrix in which this data are stored in the first column. A properly formatted `pinout` file should look like this when viewed in a text editor.
 
 
 <p align="center">
@@ -109,10 +108,10 @@ The way we get this information into SPM is by using another another `tab delimt
 
 
 
-However, in some cases not all the data is usable. For instance the `B` variable contains data from 36 OPM sensors measuring both radially and tangentially to the head and 8 trigger channels (36x2+8=80). For this experiment we only recorded data from 13 sensors measuring radially to the head along with four reference sensors. Therefore, we only need to extract 17 columns from the `B` matrix. However to do this we need to know the labels of the sensors we used and also their position relative to the brain. 
+However, in some cases not all the data is usable. For instance the `lbv.B` variable contains data from 36 OPM sensors measuring both radially and tangentially to the head and 8 trigger channels (36x2+8=80). For this experiment we only recorded data from 13 sensors measuring radially to the head along with four reference sensors. Therefore, we only need to extract 17 columns from the `B` matrix. However to do this we need to know the labels of the sensors we used and also their position relative to the brain. 
 
 
-The  file used to accomplish this is also a `tab delimted.txt file`. This file  serves three purposes. The first is that it tells us which of the sensors were used. This information is stored in the first column. This information can then be mapped to the `S.pinout` file to only select the desired sensors. The second column of this files tells us two things. The first is which sensors are reference sensors. This should be indicated by placing the label `REF` next to a reference sensor. The final purpose of this column are to tell us where the sensors are. This is done by placing the cooresponding label from the position file next to a sensor. A properly formatted file should look like this.
+The  file used to accomplish this is also a `tab delimted.txt file`. This file  serves three purposes. The first is that it tells us which of the sensors were used. This information is stored in the first column. This information can then be mapped to the `S.pinout` file to only select the desired sensors. The second column of this files tells us two things. The first is which sensors are reference sensors. This should be indicated by placing the label `REF` next to a reference sensor. The final purpose of this column are to tell us where the sensors are. This is done by placing the corresponding label from the position file next to a sensor. A properly formatted file should look like this.
 
 
 <p align="center">
@@ -125,10 +124,10 @@ If all three of these files are suppled to `spm_opm_create` when you run the fol
 
 ```matlab
 S =[];
-S.data = B';
+S.data = lbv.B';
 S.pinout= 'OPMpinout_20171018';
-S.pos = 'grb_SEF_coarse_v2';
-S.sensorsUsed='OPM2cast_20171018_grb';
+S.pos = 'SEF_coarse';
+S.sensorsUsed='OPM2cast_MedianNerve';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
@@ -137,17 +136,16 @@ D = spm_opm_create(S);
 ### Incorporating Triggers
 
 
-While the previous code snippet  allowed for the creation of SPM MEEG objects it did not show how to handle events of interest. This can be done by taking advantage of the `S.trig` argument in `spm_opm_create`. By way of example the `B` matrix contains 1 trigger channel in column 77. This  can be seen in the following code snippet.
+While the previous code snippet  allowed for the creation of SPM MEEG objects it did not show how to handle events of interest. This can be done by taking advantage of the `S.trig` argument in `spm_opm_create`. By way of example the `lbv.deciamlTrigs` matrix contains 1 trigger channel. This can be supplied to `spm_opm_create` This  can be seen in the following code snippet.
 
 
 ``` matlab
-trig = B(:,77);
 S =[];
-S.data = B';
-S.trig = trig';
+S.data = lbv.B';
+S.trig = lbv.decimalTrigs';
 S.pinout= 'OPMpinout_20171018';
-S.sensorsUsed='OPM2cast_20171018_grb';
-S.pos = 'grb_SEF_coarse_v2';
+S.pos = 'SEF_coarse';
+S.sensorsUsed='OPM2cast_MedianNerve';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
