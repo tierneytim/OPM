@@ -11,14 +11,14 @@ function [lbv] = spm_opm_read_lvm(S)
 %                     column is time variable
 %   S.triggerInds   - Indices of trigger Channels      -Default: 73:80
 %   S.trigThresh    - Value to threshold triggers at   -Default: Auto
-%   S.trigAsBinary  - Read Triggers as Binary          -Deafult: 1
-%   S.nbits         - number of bits to use            -nTriggers 
+%   
 % Output: lbv - output Structure
 %  Fields of lbv:
-%   lbv.B           - MEG data
-%   lbv.Time        - Time variable
-%   lbv.trigs       - Trigger Channels
-%   lbv.pinout      - pinout of lbv file(coming soon)
+%   lbv.B                  - MEG data
+%   lbv.Time               - Time variable
+%   lbv.decimalTrigs       - Trigger Channels
+%   lbv.binaryTrigs        - Trigger Channels
+%   lbv.pinout             - pinout of lbv file(coming soon)
 % _________________________________________________________________________
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
