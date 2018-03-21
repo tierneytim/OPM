@@ -38,7 +38,7 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 <a name="a"></a>
 ## Preliminaries and Warranty
 
-For  this code to run you must have SPM12 added to Matlab's path. To run these examples you will need to run this code snippet. This will add SPM12 and the simulation toolbox to the path. It will also change the directory to the test data folder.
+For  this code to run you must have [SPM12](http://www.fil.ion.ucl.ac.uk/spm/software/spm12/) added to Matlab's path. To run these examples you will need to run this code snippet. This will add SPM12 and the simulation toolbox to the path. It will also change the directory to the test data folder.
 
 
 ```matlab
