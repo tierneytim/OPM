@@ -91,7 +91,7 @@ The simplest way to create an MEG object is to supply data in a matrix form to t
 </p>
 
 <p align="center">
-<img src="readme/pinoutExample.png" width="600"/>
+<img src="readme/pinoutExample.PNG" width="600"/>
 </p>
 
 <p align="justify">
@@ -107,7 +107,7 @@ The way we get this information into SPM is by using another another `tab delimt
 </p>
 
 <p align="center">
-<img src="readme/locExample.png"/>
+<img src="readme/locExample.PNG"/>
 </p>
 
 
