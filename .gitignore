@@ -3,3 +3,5 @@ testData/*.dat
 testData/*.gii
 testData/*.nii
 testData/*.lvm
+testScripts/*.asv
+*.asv
