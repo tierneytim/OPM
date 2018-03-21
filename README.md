@@ -51,7 +51,7 @@ dir = 'OPM\testData';
 cd(dir)
 ```
 
-However, before you run this code you should know that it is licensed under a GNU  license with the following disclaimer and copyright.
+However, before you run this code you should know that it is licensed under a GNU license which means no warranty or liability. Please read the [License](LICENSE) before use.
 
 
 
