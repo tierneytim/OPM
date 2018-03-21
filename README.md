@@ -1,7 +1,7 @@
 # OPM processing Guide for SPM
-<p align="justify">
+
 The code in this toolbox can be used to create SPM MEEG objects from an arbitrary  data source or to simulate MEG data. The main function used in this toolbox is  `spm_opm_create`. Examples are given of how this function might be used in various contexts.  
-</p>
+
 
 
 ## Table of contents
@@ -37,9 +37,9 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 
 <a name="a"></a>
 ## Preliminaries and Warranty
-<p align="justify">
+
 For  this code to run you must have SPM12 added to Matlab's path. To run these examples you will need to run this code snippet. This will add SPM12 and the simulation toolbox to the path. It will also change the directory to the test data folder.
-</p>
+
 
 ```matlab
 %% Housekeeping
@@ -50,15 +50,15 @@ addpath('OPM')
 dir = 'OPM\testData';
 cd(dir)
 ```
-<p align="justify">
-However, before you run this code you should know that it is licensed under a GNU  license with the following disclaimer and copyright.
-</p>
 
-<p align="justify">
+However, before you run this code you should know that it is licensed under a GNU  license with the following disclaimer and copyright.
+
+
+
 ```
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or(at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA. Copyright (C) <2018>  <Tim Tierney>
 ```
-</p>
+
 
 
 <a name="b"></a>
@@ -88,25 +88,24 @@ lbv = spm_opm_read_lvm(S);
 <a name="b2"></a>
 ### Converting Raw Data
 
-<p align="justify">
+
 The simplest way to create an MEG object is to supply data in a matrix form to the function `spm_opm_create`. However, there is a lot of metadata that needs to be supplied in order to create a fully compliant SPM MEEG object. In the first instance we need to know what channels are contained in the B matrix. This is indicated by the use of a `pinout` file which is a  `tab delimted.txt file`. This file is supplied as an argument to `spm_opm_create`. This file  contains the labels of the OPM sensors in the second column and the column number of the `B` matrix in which this data are stored in the first column. A properly formatted `pinout` file should look like this when viewed in a text editor.
-</p>
+
 
 <p align="center">
 <img src="readme/pinoutExample.PNG" width="600"/>
 </p>
 
-<p align="justify">
+
 To locate the source of the neural activity we need to know where these sensors are relative to the brain. The way we have addressed this issue is by creating custom made helmets to house our sensors. We know exactly where these sensor slots are relative to the brain because we created these helmets using MRI images. An example of one of these helmets is given below. 
-</p>
+
 
 <p align="center">
 <img src="readme/scannerCast.jpg" width="600"/>
 </p>
 
-<p align="justify">
 The way we get this information into SPM is by using another another `tab delimted .txt file` which is also suppled to `spm_opm_create` as an argument. This file contains 7 Columns. The first six columns provide position(x,y,z) and orientation(x,y,z) Information in the world space of some brain image. The last column gives the label of each individual slot. This text file should look something like this when properly formatted.
-</p>
+
 
 <p align="center">
 <img src="readme/locExample.PNG" width="600"/>
@@ -114,20 +113,20 @@ The way we get this information into SPM is by using another another `tab delimt
 
 
 
-<p align="justify">
+
 However, in some cases not all the data is usable. For instance the `B` variable contains data from 36 OPM sensors measuring both radially and tangentially to the head and 8 trigger channels (36x2+8=80). For this experiment we only recorded data from 13 sensors measuring radially to the head along with four reference sensors. Therefore, we only need to extract 17 columns from the `B` matrix. However to do this we need to know the labels of the sensors we used and also their position relative to the brain. 
 
-<p align="justify">
+
 The  file used to accomplish this is also a `tab delimted.txt file`. This file  serves three purposes. The first is that it tells us which of the sensors were used. This information is stored in the first column. This information can then be mapped to the `S.pinout` file to only select the desired sensors. The second column of this files tells us two things. The first is which sensors are reference sensors. This should be indicated by placing the label `REF` next to a reference sensor. The final purpose of this column are to tell us where the sensors are. This is done by placing the cooresponding label from the position file next to a sensor. A properly formatted file should look like this.
-</p>
+
 
 <p align="center">
 <img src="readme/posExample.PNG" width="600"/>
 </p>
 
-<p align="justify">
+
 If all three of these files are suppled to `spm_opm_create` when you run the following code snippet you should get  a full formatted SPM MEEG object with 17 channels. Note that the the first text file gets supplied to `S.pinout`, the second to `S.pos` and the third to `S.sensorsUsed`. Also in this example the data needs to be transposed as SPM accepts data in the format (channels,time,trials) where as labview outputs in the form (time,channels) Also we must supply the structural MRI file from which the sensor positions were created.
-</p>
+
 
 ```matlab
 S =[];
@@ -142,9 +141,9 @@ D = spm_opm_create(S);
 <a name="b3"></a>
 ### Incorporating Triggers
 
-<p align="justify">
+
 While the previous code snippet  allowed for the creation of SPM MEEG objects it did not show how to handle events of interest. This can be done by taking advantage of the `S.trig` argument in `spm_opm_create`. By way of example the `B` matrix contains 1 trigger channel in column 77. This  can be seen in the following code snippet.
-</p>
+
 
 ``` matlab
 trig = B(:,77);
@@ -158,9 +157,8 @@ S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
 
-<p align="jutify">
+
 By default `spm_opm_create` labels these triggers as `TRIG1`, `TRIG2`, `TRIG3`... and this can be verified by using the display feature from the `SPM` GUI, selecting the dataset and looking at the `OTHER` tab.
-</p>
 
 <p align="center">
 <img src="readme/triggers.PNG" width="600"/>
@@ -183,9 +181,9 @@ S.pos = 'grb_SEF_coarse_v2';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
-<p align="justify">
+
 Running the previous code snippet should generate a SPM MEEG object that we can run source localization on.  The output of this code snippet should look something like this.
-</p>
+
 
 <p align="center">
 <img src="readme/coregSensors.PNG" width="600"/>
@@ -194,15 +192,15 @@ Running the previous code snippet should generate a SPM MEEG object that we can 
  
 <a name="d"></a>
 ## Preprocessing
-<p align="justify">
+
 A number of preprocessing steps can be optionally applied to OPM data in any order you want. Here is an example of one pipeline.
-</p>
+
 
 <a name="d1"></a>
 ### Filtering
-<p align="justify">
+
 Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 80 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. Note this will filter both the reference sensors and the measurement sensors but not the trigger channels.
-</p>
+
 
 ```matlab
 S = [];
@@ -223,9 +221,9 @@ We can verify this by once again looking  at SPM display and highlighting hte `O
 
 <a name="d2"></a>
 ### Epoching
-<p align="justify">
+
 To epoch the data we just need to tell SPM the time windows(in ms) we want to analyze and SPM will extract the data around all triggers in order to epoch the data. In order for this to work there needs to be at least 1 channel in the MEEG object that has the type `TRIG`. If you import triggers using `spm_opm_create` this will be the case. 
-</p>
+
 
 ``` Matlab
 S =[];
@@ -238,9 +236,9 @@ D= spm_opm_epochTrigger(S);
 <a name="d3"></a>
 ### Synthetic Gradiometry
 
-<p align="justify">
+
 OPMs are magnetometers and not gradiometers which makes them somewhat more susceptible to environmental interference than gradiometers. To mitigate this effect we construct `Synthetic Gradiometers` by regressing the signal in the reference sensors from the signal in the scalp sensors. This can be done on a trial by trial basis or across the whole scanning session. If epoched data is supplied the it will take place on a trial by trial basis.  An example of how you might do this is given below. 
-</p>
+
 
 ``` matlab
 S=[]
@@ -248,15 +246,15 @@ S.D=D;
 S.confounds={'REF'};
 D = spm_opm_denoise(S);
 ```
-<p align="justify">
+
 Crucially this function works in an object oriented fashion. The S.confounds argument searches for channel types that with the corresponding label and models these channels as effects of no interest. This framework should therefore be easily extended to include motion estimate from optical tracking cameras simply by changing the S.confounds variable. 
-</p>
+
 
 <a name="d4"></a>
 ### Detect Outlier Trials
-<p align="justify">
+
 Unfortunately,even after performing the synthetic gradiometry there still may be some effects of interference in the data. These effects may make some trials unusable so we provide code to identify and remove outlier trials. 
-</p>
+
 
 ```matlab
 S=[];
@@ -264,9 +262,9 @@ S.D=dD;
 S.thresh=3;
 D = spm_opm_removeOutlierTrials(S);
 ```
-<p align="justify">
+
 The above code snippet will remove trials marked as outliers and produce a figure to indicate which trials have been removed.
-<p/>
+
 
 <p align="center">
 <img src="readme/outlier.png" width="600"/>
@@ -277,9 +275,9 @@ The above code snippet will remove trials marked as outliers and produce a figur
 
 <a name="e1"></a>
 ### Evoked Responses
-<p align="justify">
+
 Once the data is preprocessed calculating a nevoked response  is easy. It just requires a few lines of code which are given below resulting in a nice pretty picture.
-</p>
+
 
 ```matlab
 S =[]
