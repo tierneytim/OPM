@@ -107,7 +107,7 @@ The way we get this information into SPM is by using another another `tab delimt
 </p>
 
 <p align="center">
-<img src="readme/locExample.PNG"/>
+<img src="readme/locExample.PNG" width="600"/>
 </p>
 
 
@@ -120,7 +120,7 @@ The  file used to accomplish this is also a `tab delimted.txt file`. This file  
 </p>
 
 <p align="center">
-![pos](readme/posExample.png)
+<img src="readme/posExample.PNG" width="600"/>
 </p>
 
 <p align="justify">
@@ -161,7 +161,7 @@ By default `spm_opm_create` labels these triggers as `TRIG1`, `TRIG2`, `TRIG3`..
 </p>
 
 <p align="center">
-<img src="readme/triggers.png" width="600"/>
+<img src="readme/triggers.PNG" width="600"/>
 </p>
 
 
@@ -186,7 +186,7 @@ Running the previous code snippet should generate a SPM MEEG object that we can 
 </p>
 
 <p align="center">
-<img src="readme/coregSensors.png" width="600"/>
+<img src="readme/coregSensors.PNG" width="600"/>
 </p>
 
  
@@ -216,7 +216,7 @@ D = spm_eeg_filter(S);
 We can verify this by once again looking  at SPM display and highlighting hte `OTHER` tab
 
 <p align="center">
-<img src="readme/filterExample.png" width="600"/>
+<img src="readme/filterExample.PNG" width="600"/>
 </p>
 
 <a name="d2"></a>
@@ -286,7 +286,7 @@ D =spm_eeg_average(S);
 ```
 
 <p align="center">
-<img src="readme/evokedresponse.png" width="600"/>
+<img src="readme/evokedresponse.PNG" width="600"/>
 </p>
 
 <a name="f"></a>
@@ -382,8 +382,9 @@ D = spm_opm_create(S);
 Once you run this code you will generate a figure like this. 
 
 <p align="center">
-![ MNI brain](readme/mni15.png)
+<img src="readme/mni15.PNG" width="600"/>
 </p>
+
 
 
 ### Whole-Head MNI space
@@ -398,7 +399,7 @@ D = spm_opm_create(S);
 Running this code snippet should generate a figure like this.
 
 <p align="center">
-![ MNI brain](readme/mni15Whole.png)
+<img src="readme/mni15Whole.PNG" width="600"/>
 </p>
 
 
@@ -408,16 +409,17 @@ to simulate data in but no positions or orientations. In this case you just need
 to give your desired sensor spacing with the `space` argument and the filepath to
 an MRI file with the `sMRI` argument. The slightly different orientation of this 
 brain is due to the fact that this brain is not in the MNI space.
+
 ```matlab
 S =[];
 S.space = 25;
 S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
 D = spm_opm_create(S);
 ```
-<p align="center">
-![ MNI brain](readme/native15.png)
-</p>
 
+<p align="center">
+<img src="readme/native15.PNG" width="600"/>
+</p>
 
 ### Individual subject with fixed sensor positions
 If you already have positions and orientations for a certain brain image this can 
@@ -439,8 +441,9 @@ S.sMRI= 'rsMQ02589-0008-00001-000224-01.nii';
 D = spm_opm_create(S);
 ```
 <p align="center">
-![ dragon](readme/givenSensors.png)
-<p>
+<img src="readme/givenSensors.PNG" width="600"/>
+</p>
+
 
 ### Individual Subject with Custom Cortical Mesh
 Other times you may not wish to use the default meshes supplied by SPM and may wish
@@ -456,7 +459,7 @@ D = spm_opm_create(S);
 ```
 
 <p align="center">
-<img src="readme/dragonNative.png" width="600" height="368" />
+<img src="readme/dragonNative.PNG" width="600" height="368" />
 <p>
 
 <a name="g"></a>
