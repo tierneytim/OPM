@@ -164,13 +164,13 @@ There are some other settings of `spm_opm_create` that are important for data im
 
 ```matlab
 S =[];
-S.data = B';
-S.trig = trig';
-S.fs =1000;
+S.data = lbv.B';
+S.trig = lbv.decimalTrigs';
+S.fs =1200;
 S.scale = 1e6/2.7;
 S.pinout= 'OPMpinout_20171018';
-S.sensorsUsed='OPM2cast_20171018_grb';
-S.pos = 'grb_SEF_coarse_v2';
+S.pos = 'SEF_coarse';
+S.sensorsUsed='OPM2cast_MedianNerve';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 ```
@@ -206,7 +206,7 @@ S.order = 2;
 D = spm_eeg_filter(S);
 ```
 
-We can verify this by once again looking  at SPM display and highlighting hte `OTHER` tab
+We can verify this by once again looking  at SPM display and highlighting the `OTHER` tab
 
 <p align="center">
 <img src="readme/filterExample.PNG" width="600"/>
@@ -251,7 +251,7 @@ Unfortunately,even after performing the synthetic gradiometry there still may be
 
 ```matlab
 S=[];
-S.D=dD;
+S.D=D;
 S.thresh=3;
 D = spm_opm_removeOutlierTrials(S);
 ```
@@ -269,7 +269,7 @@ The above code snippet will remove trials marked as outliers and produce a figur
 <a name="e1"></a>
 ### Evoked Responses
 
-Once the data is preprocessed calculating a nevoked response  is easy. It just requires a few lines of code which are given below resulting in a nice pretty picture.
+Once the data is preprocessed calculating an evoked response  is easy. It just requires a few lines of code which are given below resulting in a nice pretty picture.
 
 
 ```matlab
@@ -277,7 +277,14 @@ S =[]
 S.D=D;
 D =spm_eeg_average(S);
 ```
+We can also apply a baseline correction to this dataset as well
 
+```matlab
+S=[];
+S.D=D;
+S.timewin=[-100 -20];
+```
+D = spm_eeg_bc(S);
 <p align="center">
 <img src="readme/evokedresponse.PNG" width="600"/>
 </p>
@@ -290,35 +297,39 @@ D =spm_eeg_average(S);
 
 ``` 
 
+
+
 %% Housekeeping
 clear all
-addpath('C:\Users\ttierney\Documents\spm12')
+addpath('spm12')
 spm('defaults', 'eeg')
-addpath('D:\toolboxes\SensorPlacement')
-dir = 'D:\toolboxes\SensorPlacement\testData';
+addpath('OPM')
+dir = '\OPM\testData';
 cd(dir)
 
 %% Reading labview
 S = [];
-S.filename= 'QZFM_6.lvm';
+S.filename= 'QZFM_6.zip';
 S.nchannels=81;
-S.headerlength=23;
+S.trigThresh=4;
+S.decimalTriggerInds=74:81;
+S.binaryTriggerInds=[];
 S.timeind=1;
-[B, time]= spm_opm_read_lvm(S);
+lbv = spm_opm_read_lvm(S);
 
-%% raw data with labels, triggers and sensor positions
-trig = B(:,77);
+%% Conversion
 S =[];
-S.data = B';
-S.trig = trig';
-S.fs =1000;
+S.data = lbv.B';
+S.trig = lbv.decimalTrigs';
+S.fs =1200;
+S.scale = 1e6/2.7;
 S.pinout= 'OPMpinout_20171018';
-S.sensorsUsed='OPM2cast_20171018_grb';
-S.pos = 'grb_SEF_coarse_v2';
+S.pos = 'SEF_coarse';
+S.sensorsUsed='OPM2cast_MedianNerve';
 S.sMRI= 'msMQ0484_orig.img';
 D = spm_opm_create(S);
 
-%% filter the data
+%% filtering
 S = [];
 S.D = D;
 S.type = 'butterworth';
@@ -332,13 +343,14 @@ D = spm_eeg_filter(S);
 S =[];
 S.D=D;
 S.timewin=[-100 300];
-S.condLabels= {'Median Nerve'};
 D= spm_opm_epochTrigger(S);
 
 %% denoising
-S=[]
+S=[];
 S.D=D;
 S.confounds={'REF'};
+S.gs=1;
+S.derivative=1;
 D = spm_opm_denoise(S);
 
 %% Detecting outlier Trials
@@ -347,11 +359,17 @@ S.D=D;
 S.thresh=3;
 D = spm_opm_removeOutlierTrials(S);
 
-
-%% average the data
-S =[]
+%% Average
+S =[];
 S.D=D;
-md =spm_eeg_average(S);
+D =spm_eeg_average(S);
+
+%% baseline correct
+S=[];
+S.D=D;
+S.timewin=[-100 -20];
+D = spm_eeg_bc(S);
+
 ```
 
 <a name="c"></a>
