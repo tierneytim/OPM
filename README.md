@@ -68,17 +68,19 @@ This program is free software; you can redistribute it and/or modify it under th
 
 <a name="b1"></a>
 ### Reading Labview Files 
-<p align="justify">
+
 While OPM data may come in many native formats currently the UCL/UoN native file format is a `labview text file` format. As such a helper funciton to read these Labview files is provided. If any other file format is used the user needs to write a read function that will read this file into a matrix in Matlab. The function has a number of arguments that need to be changed depending on the file format.  The `S.nchannels` argument specifies the number of columns in the `labview file`. The `S.headerlength` argument specifies the the number of lines of text that contain header information. The `S.timeind` argument specifies the index of the time variable. If there is no time variable set this value as 0.
-</p>
+
 
 ```matlab
 S = [];
-S.filename= 'QZFM_6.lvm';
+S.filename= 'QZFM_6.zip';
 S.nchannels=81;
-S.headerlength=23;
+S.trigThresh=4;
+S.decimalTriggerInds=74:81;
+S.binaryTriggerInds=[];
 S.timeind=1;
-[B, time]= spm_opm_read_lvm(S);
+lbv = spm_opm_read_lvm(S);
 ```
 
 
