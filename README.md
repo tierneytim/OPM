@@ -19,7 +19,6 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 4. [Sensor Space Analysis](#e)
 	1. [Evoked Response](#e1)
 	2. [Time Frequency Analysis](#e2)
-	3. [Bootstrapping Responses](#e3)
 5. [Source Space Analysis](#f)
 	1. [Dipole Fitting](#f1)
 	2. [Distributed Source Inversion on a Mesh](#f2)
@@ -283,22 +282,40 @@ We can also apply a baseline correction to this dataset as well
 S=[];
 S.D=D;
 S.timewin=[-100 -20];
-```
 D = spm_eeg_bc(S);
+```
+
 <p align="center">
 <img src="readme/evokedresponse.PNG" width="600"/>
 </p>
 
+
+<a name="e2"></a>
+### Time Frequency Analysis
+Coming soon!
+
 <a name="f"></a>
 ## Source Space Analysis
 
+<a name="f1"></a>
+### Dipole Fitting
+Coming soon!
+
+<a name="f2"></a>
+### Distributed Source Inversion on a Mesh
+Coming soon!
+
+<a name="f3"></a>
+### Distributed Source Inversion in a Volume
+Coming soon!
+
+
 <a name="h"></a>
-## A whole Script
+## An example script
+
+Here we put all the steps together into 1 script for you to try out.
 
 ``` 
-
-
-
 %% Housekeeping
 clear all
 addpath('spm12')
@@ -369,7 +386,6 @@ S=[];
 S.D=D;
 S.timewin=[-100 -20];
 D = spm_eeg_bc(S);
-
 ```
 
 <a name="c"></a>
