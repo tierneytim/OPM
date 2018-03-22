@@ -81,22 +81,26 @@ else
     tTrigsBinary = binTrigs>thresh;
     
 end
-
-msg='Triggers are not bitwise consistent. Please confirm trigger accuracy';
-
+m1= 'Triggers are not bitwise consistent. ';
+m2= 'Attempting a Correction. ';
+m3='Please check triggers before epoching.';
+msg= [m1,m2,m3];
+dBefore= tTrigsDecimal;
     for i = 1:size(tTrigsDecimal,2)
         for j= 1:size(tTrigsDecimal,2)
             di =tTrigsDecimal(:,i)-tTrigsDecimal(:,j);
             prLoc = [find(di==1);find(di==-1)];
             if(all(abs(diff(prLoc))>1))
-                display(msg)
                 tTrigsDecimal(prLoc,i)=1;
                 tTrigsDecimal(prLoc,j)=1;
             end
             
         end
     end
-
+ err= sum(sum(abs(dBefore-tTrigsDecimal)));
+ if(err>0)
+ warning(msg)
+ end
 %-convert triggers
 %--------------------------------------------------------------------------
 S.nbits = length(S.decimalTriggerInds);
