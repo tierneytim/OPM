@@ -20,7 +20,7 @@ function [opti] = spm_opm_read_optitrack(S)
 if ~isfield(S, 'fname'),         error('fname needs to be provided');end
 if ~isfield(S, 'headerlength'),  S.headerlength = 8; end
 if ~isfield(S, 'avPos'),         S.avPos = 1; end
-if ~isfield(S, 'cleanupThresh'), S.avPos = []; end
+if ~isfield(S, 'cleanupThresh'), S.cleanupThresh = []; end
 
 if  isfield(S, 'optiTrigger')  
     interpolate = 1; 
