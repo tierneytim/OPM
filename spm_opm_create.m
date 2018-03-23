@@ -258,6 +258,18 @@ else
     binTrig = [];
     triglabs={};
 end
+%- Account for PHYS type
+%--------------------------------------------------------------------------
+if isfield(S ,'other')
+    other = zeros(size(S.other));
+    S.data = [S.data;other];
+    St = [];
+    St.base='PHYS';
+    St.n=size(S.other,1);
+    physlabs = createLabels(St);
+else
+    physlabs={};
+end
 %- Account for different channel types
 %--------------------------------------------------------------------------
 % initially say its all MEG data
@@ -272,9 +284,18 @@ end
 % then add TRIG type if they exist
 for i = 0:(size(binTrig,1)-1)
     cType{(end-i)} ='TRIG';
+    trigInd = find(strcmp('TRIG',cType));
 end
-trigInd = find(strcmp('TRIG',cType));
 
+% then add PHYS type if they exist
+if(isfield(S,'other'))
+stPhys=size(cType,1)-size(binTrig,1)-size(S.other,1)+1;
+endPhys=size(cType,1)-size(binTrig,1);
+for i = stPhys:endPhys
+    cType{i,:} ='PHYS';
+end
+physInd = find(strcmp('PHYS',cType));
+end
 %-Sensor Level Data
 %--------------------------------------------------------------------------
 D = spm_opm_convert(S.data,S.fname,S.fs,S.scale);
@@ -283,6 +304,11 @@ D = spm_opm_convert(S.data,S.fname,S.fs,S.scale);
 % scaling of the triggers
 if isfield(S ,'trig')
     D(trigInd,:,:)= binTrig;
+    save(D)
+end
+
+if isfield(S ,'other')
+    D(physInd,:,:)= S.other;
     save(D)
 end
 %-Scalp Extraction
@@ -370,8 +396,8 @@ if ~labeledData
 end
 
 % now we know how many sensors we have we can set units labels and types
-labs = [labs;triglabs'];
-D = units(D,1:nSensors,'fT');
+labs = [labs;physlabs';triglabs'];
+D = units(D,[megInd;refInd],'fT');
 D = chantype(D,1:nSensors,cType);
 D = chanlabels(D,1:size(D,1),labs');
 save(D);
