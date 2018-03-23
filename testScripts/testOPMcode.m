@@ -1,9 +1,9 @@
 %% Housekeeping
 clear all
-addpath('C:\Users\ttierney\Documents\spm12')
+addpath('spm12')
 spm('defaults', 'eeg')
-addpath('C:\Users\ttierney\Documents\GitHub\OPM\')
-dir = 'C:\Users\ttierney\Documents\GitHub\OPM\testData';
+addpath('OPM\')
+dir = 'OPM\testData';
 cd(dir)
 
 %% Reading labview
