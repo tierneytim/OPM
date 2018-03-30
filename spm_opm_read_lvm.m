@@ -41,11 +41,11 @@ end
 
 %-Check for zipped files
 %--------------------------------------------------------------------------
-[~,~,c]= fileparts(S.filename);
-zipped = strmatch(c,'.zip');
+[fold,fi,ext]= fileparts(S.filename);
+zipped = strmatch(ext,'.zip');
 
 if(zipped)
-cellFile=unzip(S.filename);
+cellFile=unzip(S.filename,fold);
     S.filename= cellFile{1};
 end
 %-find start of data
