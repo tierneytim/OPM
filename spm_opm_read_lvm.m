@@ -33,6 +33,11 @@ if ~isfield(S, 'timeind'),             S.timeind = 1; end
 if ~isfield(S, 'decimalTriggerInds'),  S.decimalTriggerInds = 74:81; end
 if ~isfield(S, 'binaryTriggerInds'),   S.binaryTriggerInds = []; end
 
+%-Check for cells 
+%--------------------------------------------------------------------------
+if iscell(S.filename)
+    S.filename=S.filename{1};
+end
 
 %-Check for zipped files
 %--------------------------------------------------------------------------
