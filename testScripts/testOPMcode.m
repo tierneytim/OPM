@@ -47,12 +47,12 @@ D= spm_opm_epochTrigger(S);
 S=[];
 S.D=D;
 S.confounds={'REF'};
-S.gs=1;
+S.gs=0;
 S.derivative=1;
-dD = spm_opm_denoise(S);
+D = spm_opm_denoise(S);
 %% Detecting outlier Trials
 S=[];
-S.D=dD;
+S.D=D;
 S.thresh=3;
 D = spm_opm_removeOutlierTrials(S);
 %% Average
@@ -64,29 +64,3 @@ S=[];
 S.D=D;
 S.timewin=[-100 -20];
 D = spm_eeg_bc(S);
-%% Simulation: half-head
-S =[];  
-S.space = 15;  
-D = spm_opm_create(S);  
-%% Simulation: whole-head
-S =[];
-S.space = 15;
-S.wholehead=1;
-D = spm_opm_create(S);
-
-%% Simulation: individual
-S =[];
-S.space = 15;
-S.sMRI= 'msMQ0484_orig.img';
-D = spm_opm_create(S);
-%% Simulation: individual- supplied positions
-S =[];
-S.pos = 'SEF_coarse';
-S.sMRI= 'msMQ0484_orig.img';
-D = spm_opm_create(S);
-%% Simulation: individual - custom mesh
-S =[];
-S.space = 15;
-S.cortex='testCustom.gii';
-S.sMRI= 'msMQ0484_orig.img';
-D = spm_opm_create(S);

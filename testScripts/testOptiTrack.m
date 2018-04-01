@@ -55,7 +55,7 @@ D= spm_opm_epochTrigger(S);
 S=[];
 S.D=D;
 S.confounds={'REF';'PHYS'};
-S.gs=1;
+S.gs=0;
 S.derivative=1;
 dD = spm_opm_denoise(S);
 
