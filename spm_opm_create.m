@@ -238,9 +238,11 @@ if labeledData
     refInd = find(strcmp('REF',sensorsUsed.Var2));
     nMeg = length(used)-length(refInd);
     S.data = S.data(matPos,:);
+    megInd= setdiff(1:size(used,1),refInd)';
 else
     refInd=[];
     nMeg = size(S.data,1);
+    megInd = 1:nMeg;
 end
 %- Account for triggers
 %--------------------------------------------------------------------------
