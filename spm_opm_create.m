@@ -336,7 +336,7 @@ end
 if forward
     % if user supplies postions and orientations
     if isfield(S, 'pos')
-        posOri = readtable(S.pos,'Delimiter','\t');
+        posOri = readtable(S.pos,'Delimiter','\t','ReadVariableNames',false);
         
         % if its labelled data subset the postions and orientaitons
         if(labeledData)
@@ -361,7 +361,7 @@ if forward
         else
             pos = [posOri.Var1,posOri.Var2,posOri.Var3];
             ori = [posOri.Var4,posOri.Var5,posOri.Var6];
-            nSensors = length(pos);
+            nSensors = size(pos,1);
             D = clone(D,S.fname,[nSensors,S.nSamples,1],1);
             megInd = 1:nSensors;
         end
@@ -446,6 +446,28 @@ if forward
     M = f;
     M.pnt = D.inv{1}.mesh.fid.pnt;
     D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+end
+
+%- 2D view based on mean orientation of sensors 
+%--------------------------------------------------------------------------
+if(forward)
+    n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
+    t1=cross(n1,[0 0 1]);
+    t2=cross(t1,n1);
+    
+    for i=1:size(grad.coilpos,1)
+        pos2d(i,1)=dot(grad.coilpos(i,:),t1);
+        pos2d(i,2)=dot(grad.coilpos(i,:),t2);
+    end;
+    
+    
+    args=[];
+    args.D=D;
+    args.xy= pos2d';
+    args.label=grad.label;
+    args.task='setcoor2d';
+    D=spm_eeg_prep(args);
+    D.save;
 end
 %- Foward  model specification
 %--------------------------------------------------------------------------
