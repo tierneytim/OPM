@@ -39,7 +39,7 @@ if iscell(S.filename)
     S.filename=S.filename{1};
 end
 
-%-Check for zipped files
+%-Check for zipped files and read data
 %--------------------------------------------------------------------------
 [fold,fi,ext]= fileparts(S.filename);
 zipped = strmatch(ext,'.zip');
@@ -48,21 +48,12 @@ if(zipped)
 cellFile=unzip(S.filename,fold);
     S.filename= cellFile{1};
 end
-%-find start of data
-%--------------------------------------------------------------------------
 
-fid = fopen(S.filename);
-for i =1:S.headerlength
-    fgetl(fid);
-end
-data_start_position = ftell(fid);
-fseek(fid, data_start_position, 'bof');
+data = dlmread(S.filename, '\t',S.headerlength,0);
 
-%-read and return data
+
+%-Subset  magnetic fields and triggers
 %--------------------------------------------------------------------------
-raw_data = fread(fid,'uint8=>char');
-data = sscanf(raw_data, '%f',[S.nchannels,Inf])';
-fclose(fid);
 
 chans = 1:S.nchannels;
 time = data(:,S.timeind);
