@@ -341,7 +341,7 @@ if forward
         % if its labelled data subset the postions and orientaitons
         if(labeledData)
             megInd = find(strcmp('MEG',cType));
-            slots = {sensorsUsed.Var2{megInd}}';
+            slots = sensorsUsed.Var2(megInd)'; 
             posSlots = posOri.Var7;
             slotind = zeros(length(slots),1);
             for j = 1:length(slots)
