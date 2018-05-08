@@ -3,8 +3,6 @@ function [lbv] = spm_opm_read_lvm(S)
 %   S               - input structure
 % Optional fields of S:
 %   S.filename           - filepath to LVM file             -Default: no Default                      
-%   S.nchannels          - integer specifying how many      -Default: 81
-%                          channels
 %   S.headerlength       - integer specifying how many      -Default: 23
 %                          lines of file are header
 %   S.timeind            - integer specifying which         -Default: 1
@@ -27,7 +25,6 @@ function [lbv] = spm_opm_read_lvm(S)
 %--------------------------------------------------------------------------
 msg= 'filename needs to be provided';
 if ~isfield(S, 'filename'),            error(msg); end
-if ~isfield(S, 'nchannels'),           S.nchannels = 81; end
 if ~isfield(S, 'headerlength'),        S.headerlength = 23; end
 if ~isfield(S, 'timeind'),             S.timeind = 1; end
 if ~isfield(S, 'decimalTriggerInds'),  S.decimalTriggerInds = 74:81; end
@@ -45,7 +42,7 @@ end
 zipped = strmatch(ext,'.zip');
 
 if(zipped)
-cellFile=unzip(S.filename,fold);
+    cellFile=unzip(S.filename,fold);
     S.filename= cellFile{1};
 end
 
@@ -55,7 +52,7 @@ data = dlmread(S.filename, '\t',S.headerlength,0);
 %-Subset  magnetic fields and triggers
 %--------------------------------------------------------------------------
 
-chans = 1:S.nchannels;
+chans = 1:size(data,2);
 time = data(:,S.timeind);
 Bind = setdiff(chans,S.timeind);
 B = data(:,Bind);
