@@ -20,7 +20,7 @@ function [D,L] = spm_opm_create(S)
 % Optional fields of S:
 %   S.data          - 2/3 dimensaional array       - Default: empty dataset 
 %   S.pinout        - filepath to pinout file      - Default: no labels
-%   S.fname         - filename for  dataset        - Default: 'simOPM.dat'
+%   S.fname         - filename for  dataset        - Default: 'OPM.dat'
 %   S.fs            - Sampling rate of dataset     - Default: 1000
 %   S.scale         - scale factor (to fT)         - Default: 1
 %   S.trig          - trigger matrix               - Default: no triggers 
@@ -215,8 +215,8 @@ if ~isfield(S, 'lead'),        S.lead = 0; end
 %-File Management
 %--------------------------------------------------------------------------
 [a,b]= fileparts(S.fname);
-ma = [a,b,'.mat'];
-da = [a,b,'.dat'];
+ma = fullfile(a,[b,'.mat']);
+da = fullfile(a,[b,'.dat']);
 
 if exist(ma,'file')==2
     delete(ma);
