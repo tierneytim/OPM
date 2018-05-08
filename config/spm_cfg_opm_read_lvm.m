@@ -15,16 +15,6 @@ filename.filter = '(.lvm|.zip)';
 filename.num    = [1 1];
 filename.help   = {'Select the (zipped) lvm file.'};
 
-%--------------------------------------------------------------------------
-% nchannels
-%--------------------------------------------------------------------------
-nchannels       = cfg_entry;
-nchannels.tag     = 'nchannels';
-nchannels.name    = 'No. of channels';
-nchannels.help    = {'The number of columns containing data in the labview file.'};
-nchannels.strtype = 'r';
-nchannels.num     = [1,1];
-nchannels.val     = {81};
 
 %--------------------------------------------------------------------------
 % headerlength
@@ -88,23 +78,32 @@ trigThresh.val     = {4};
 %--------------------------------------------------------------------------
 labview          = cfg_exbranch;
 labview.tag      = 'labview';
-labview.name     = 'LabView';
-labview.val      = {filename, nchannels,headerlength,timeind,decimalTriggerInds,binaryTriggerInds,trigThresh};
+labview.name     = 'Read LabView Files';
+labview.val      = {filename,headerlength,timeind,decimalTriggerInds,binaryTriggerInds,trigThresh};
 labview.help     = {'Reading LabView data'}';
 labview.prog     = @lbv_read;
 labview.vout     = @vout_lbv_read;
 labview.modality = {'EEG'};
-
+end
 %==========================================================================
 function labview = lbv_read(job)
 % construct the S struct
 S=job;
-labview.lbv    = spm_opm_read_lvm(S);
+[a,b,~]=fileparts(S.filename{1});
+outfile= fullfile(a,[ b, '.mat']);
 
+data    = spm_opm_read_lvm(S);
+save(outfile,'data');
+
+labview.data= {outfile};
+
+
+end
 %==========================================================================
 function dep = vout_lbv_read(job)
 % return dependencies
-dep(1)            = cfg_dep;
-dep(1).sname      = 'LabView object';
-dep(1).src_output = substruct('.','lbv');
-dep(1).tgt_spec   = cfg_findspec({{'strtype','lbv'}});
+dep = cfg_dep;
+dep.sname = 'Prepared Labview Data';
+dep.src_output = substruct('.','data');
+dep.tgt_spec   = cfg_findspec({{'filter','mat'}});
+end
