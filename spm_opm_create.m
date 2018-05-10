@@ -433,6 +433,7 @@ if forward
     else
         fid.fid.pnt = S.fid;
     end
+    fid.pos= []; % headshape field that is left blank (GRB)
     D = fiducials(D, fid);
     save(D);
 end
