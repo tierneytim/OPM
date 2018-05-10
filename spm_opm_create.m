@@ -300,7 +300,7 @@ physInd = find(strcmp('PHYS',cType));
 end
 %-Sensor Level Data
 %--------------------------------------------------------------------------
-D = spm_opm_convert(S.data,S.fname,S.fs,S.scale);
+D = opm_convert(S.data,S.fname,S.fs,S.scale);
 
 % initially D is filled with zeros in trigger channel. This prevents
 % scaling of the triggers
@@ -327,7 +327,7 @@ if forward
     args.iskull = S.iskull;
     args.oskull = S.oskull;
     args.template = template;
-    D = spm_opm_customMeshes(args);
+    D = opm_customMeshes(args);
     save(D);
 end
 
@@ -373,7 +373,7 @@ if forward
         args.offset = S.offset;
         args.space = S.space;
         args.wholehead = S.wholehead;
-        [pos,ori] = spm_opm_createSensorArray(args);
+        [pos,ori] = opm_createSensorArray(args);
         nSensors = length(pos);
         D = clone(D,S.fname,[nSensors,S.nSamples,1],1);
         megInd = 1:nSensors;
@@ -483,3 +483,685 @@ if forward
 end
 save(D)
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           OPM CONVERT                                   %                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function Dout = opm_convert(array,fnamedat,fs,scale)
+% Convert array into SPM MEEG object
+% FORMAT Dout = spm_opm_convert(array,fnamedat,fs,scale)
+%
+% array       - numeric Array of 2,3,4 dimensions(channels,time,trials)
+% fnamedat    - string specifing output path of object(include extension .dat)
+% fs          - sampling frequency
+% scale       - scale factor to convert to fT [default: 1]
+%__________________________________________________________________________
+% Copyright (C) 2017 Tim Tierney
+
+% Tim Tierney
+
+% determine output filename
+[a, b] = fileparts(fnamedat);
+outMat = fullfile(a,[b,'.mat']);
+
+% if scale is not supplied set a default  of 1 
+if nargin < 4
+    scale = 1;
+end
+    
+array = array.*scale;
+
+% find number of dimensions and decide what to do based on result
+dim = size(array);
+L   = length(dim);
+
+if L > 4
+    % throw error for having unsupported number of dimensions
+    error('Array should not have more than 4 dimensions.');
+elseif L == 4
+    % create MEG object with appropriate size
+    Dout = meeg(dim(1),dim(2),dim(3),dim(4));
+    
+    % make it a blank object
+    Dout= blank(Dout,fnamedat);
+    
+    % set the smaple rate 
+    Dout = Dout.fsample(fs);
+    
+    % fill in data with supplied array
+    Dout(1:dim(1),1:dim(2),1:dim(3),1:dim(4)) = array;
+elseif L == 3
+    % same with less dimensions
+    Dout = meeg(dim(1),dim(2),dim(3));
+    Dout= blank(Dout,fnamedat);
+    Dout = Dout.fsample(fs);
+    Dout(1:dim(1),1:dim(2),1:dim(3)) = array;
+    
+elseif L == 2 
+    %same with less dimensions
+    Dout = meeg(dim(1),dim(2),1);
+    Dout= blank(Dout,fnamedat);
+    Dout = Dout.fsample(fs);
+    Dout(1:dim(1),1:dim(2),1) = array;
+else
+    % throw exception if I really don't know what to do
+    error('Array must have between 2 and  4 dimensions.');
+end
+
+% set the filename and save
+Dout = fname(Dout,outMat);
+Dout.save;
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     Grid Surface Intersection                           %                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function outs = poiGridSurface(surface,space,lowerThresh,upperThresh)
+% Find where a grid intersects a surface (ideally convex)
+
+% Create Grid 
+%--------------------------------------------------------------------------
+bbMin = min(surface.vertices);
+bbMax = max(surface.vertices);
+x = (bbMin(1)-space):space:(bbMax(1)+space);
+y = (bbMin(2)-space):space:(bbMax(2)+space);
+z = (bbMin(3)-space):space:(bbMax(3)+space);
+[X,Y,Z] = ndgrid(x,y,z);
+grid   = [X(:) Y(:) Z(:)];
+
+% Keep only outer layer of grid
+%--------------------------------------------------------------------------
+mi = min(grid);
+ma = max(grid);
+
+miX = grid(find(abs(grid(:,1) - mi(1))<=.01),:);
+miY = grid(find(abs(grid(:,2) - mi(2))<=.01),:);
+miZ = grid(find(abs(grid(:,3) - mi(3))<=.01),:);
+
+maX = grid(find(abs(grid(:,1) - ma(1))<=.01),:);
+maY = grid(find(abs(grid(:,2) - ma(2))<=.01),:);
+maZ = grid(find(abs(grid(:,3) - ma(3))<=.01),:);
+
+
+
+
+% ny
+%--------------------------------------------------------------------------
+outs = zeros(length(maY),3);
+
+for j = 1:length(maY)
+Ia = maY(j,:);
+Ib = maY(j,:)+200.*[0,-1,0];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outsny = outs(ind,:);
+display('Negative Y')
+
+% py
+%--------------------------------------------------------------------------
+outs = zeros(length(miY),3);
+
+for j = 1:length(miY)
+Ia = miY(j,:);
+Ib = miY(j,:)+200.*[0,1,0];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outspy = outs(ind,:);
+display('Positive Y')
+
+% nx
+%--------------------------------------------------------------------------
+outs = zeros(length(maX),3);
+
+for j = 1:length(maX)
+Ia = maX(j,:);
+Ib = maX(j,:)+200.*[-1,0,0];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outsnx = outs(ind,:);
+display('Negative X');
+
+% px
+%--------------------------------------------------------------------------
+outs = zeros(length(miX),3);
+
+for j = 1:length(miX)
+Ia = miX(j,:);
+Ib = miX(j,:)+200.*[1,0,0];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outspx = outs(ind,:);
+display('Postive X')
+
+% nz
+%--------------------------------------------------------------------------
+outs = zeros(length(maZ),3);
+
+for j = 1:length(maZ)
+Ia = maZ(j,:);
+Ib = maZ(j,:)+200.*[0,0,-1];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outsnz = outs(ind,:);
+
+display('Negative Z');
+
+% pz
+%--------------------------------------------------------------------------
+outs = zeros(length(miZ),3);
+
+for j = 1:length(miZ)
+Ia = miZ(j,:);
+Ib = miZ(j,:)+200.*[0,0,1];
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+nfaces = length(surface.faces);
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(surface.faces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outspz = outs(ind,:);
+
+display('Positive Z');
+% Initial Points
+%--------------------------------------------------------------------------
+uspz = unique(round(outsnz,3),'rows');
+% nn= [];
+% rem = zeros(length(uspz),1);
+% dist = squareform(pdist(uspz));
+% 
+% for i =1:length(uspz)
+%     sdist= sort(dist(:,i));
+%     nn= min(sdist(2:4));
+%     if(nn<upperThresh)
+%         rem(i)=1;
+%     else
+%         rem(i)=0;
+%     end
+%         
+% end
+% uspz = uspz(boolean(rem),:);
+
+% Constrained adding of points
+%--------------------------------------------------------------------------
+other = [unique(round(outsnx,3),'rows');...
+         unique(round(outspy,3),'rows');...
+         unique(round(outsny,3),'rows');...
+         unique(round(outspz,3),'rows');...
+         unique(round(outspx,3),'rows');...
+         ];
+    us = uspz;
+    
+for i = 1:length(other)
+ot = other(i,:);
+di = sqrt(sum((bsxfun(@minus,us,ot)).^2,2));
+if(all(di>lowerThresh))
+   us = [us;ot];
+   
+% rem = zeros(length(us),1);
+% dist = squareform(pdist(us));
+% for i =1:length(us)
+%     sdist= sort(dist(:,i));
+%     nn= min(sdist(2:6));
+%     if(nn>upperThresh)
+%         rem(i)=0;
+%     else
+%         rem(i)=1;
+%     end
+%         
+% end 
+end
+
+end
+
+% return
+%--------------------------------------------------------------------------     
+outs = us;
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     Line Surface Intersection                           %                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function outs = poiLineSurface(surface,points,normals,dist)
+% Find where a point intersects a surface 
+
+%Point of intersection
+%--------------------------------------------------------------------------
+outs = zeros(length(points),3);
+
+% compute all face centres
+posi = zeros(size(surface.faces));
+for i = 1:length(posi)
+    whichVerts = surface.faces(i,:);
+    cos = surface.vertices(whichVerts,:);
+    posi(i,:) = mean(cos);   
+end
+
+
+for j = 1:length(points)
+Ia = points(j,:);
+Ib = points(j,:)+dist.*normals(j,:);
+
+m = zeros(3,3);
+m(:,1) = Ia-Ib;
+
+di = sqrt(sum(bsxfun(@minus,posi,Ia).^2,2));
+faceInd = find(di<dist);
+
+
+smallFaces = surface.faces(faceInd,:);
+nfaces = length(smallFaces);
+
+tuv = zeros(nfaces,3);
+verts = double(zeros(3,3));
+Y = zeros(3,1);
+
+for i = 1:nfaces
+verts = surface.vertices(smallFaces(i,:),:);
+m(:,2) = verts(2,:)-verts(1,:);
+m(:,3) = verts(3,:)-verts(1,:);
+Y = (Ia-verts(1,:))';
+tuv(i,:) = m\Y;
+end
+
+a = tuv(:,1)< 1 & tuv(:,1)>0;
+b = tuv(:,2)< 1 & tuv(:,2)>0;
+c = tuv(:,3)< 1 & tuv(:,3)>0;
+d = (tuv(:,2)+tuv(:,3))<=1;
+e = a&b&c&d;
+mul =min(tuv(e,1));
+
+if(~isempty(mul))
+outs(j,:) = Ia+(Ib-Ia)*mul;
+end
+
+end
+ind = sum(abs(outs),2)>0;
+outs = outs(ind,:);
+display('Positive Y')
+
+
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     Create Sensor Array                                 %                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [pos,ori] = opm_createSensorArray(S)
+% Given a scalp surface even samples the surface with sensors 
+% 
+% FORMAT [pos,ori] = spm_opm_createSensorArray(S)
+%   S               - input structure
+% Fields of S:
+%   S.D            - SPM M/EEG object with surface meshes 
+%   S.offset       - distance to place sensors(mm) from scalp surface
+%   S.space        - distance between sensors(mm) 
+%   S.wholehead    - boolean: Should whole scalp surface should be covered?
+% _________________________________________________________________________
+
+% Args
+%--------------------------------------------------------------------------
+D = S.D;
+offset = S.offset;       
+space = S.space;
+wholehead = S.wholehead;
+% Meshes
+%--------------------------------------------------------------------------
+scalp = gifti(D.inv{1}.mesh.tess_scalp);
+cortex = gifti(D.inv{1}.mesh.tess_ctx);
+Nf = size(scalp.faces,1);
+lp = min(cortex.vertices(:,3));
+
+% Face Positions(Downsampled)
+%--------------------------------------------------------------------------
+
+if(~wholehead)
+    C= scalp.vertices(:,3)>(lp);
+dscalp = spm_mesh_split(scalp,C);
+else 
+    dscalp =scalp;
+end
+p = [];
+p.faces =dscalp.faces;
+p.vertices = double(dscalp.vertices);
+dscalp = reducepatch(p,.05);
+
+[Nv,Nf]= spm_mesh_normals(dscalp,true);
+posi = zeros(size(dscalp.faces));
+cog = mean(scalp.vertices);
+
+for i = 1:length(posi)
+    whichVerts = dscalp.faces(i,:);
+    cos = dscalp.vertices(whichVerts,:);
+    posi(i,:) = mean(cos);   
+end
+
+% Face Orientations (Downsampled)
+%--------------------------------------------------------------------------
+ori = zeros(size(Nf));
+
+for i = 1:length(Nf)
+ad = posi(i,:) + 5*Nf(i,:);
+subtrac = posi(i,:) - 5*Nf(i,:);
+
+d1 = sum((cog - ad).^2);
+d2 = sum((cog - subtrac).^2);
+
+if(d2>d1)
+    ori(i,:) = -Nf(i,:);
+else
+    ori(i,:) = Nf(i,:);
+end
+end
+
+% Evenly sampled Positions on Downsampled scalp
+%--------------------------------------------------------------------------
+outs = poiGridSurface(dscalp,space,space*.8,space*1.25);
+
+% Find what face we're on
+%--------------------------------------------------------------------------
+faceInd = zeros(size(outs,1),1);
+for i = 1:length(outs)
+    [mi,ind] = min(sqrt(sum(bsxfun(@minus,posi,outs(i,:)).^2,2)));
+    faceInd(i)=ind;
+
+end
+
+% Project to used scalp
+%--------------------------------------------------------------------------
+pos = poiLineSurface(scalp,outs,ori(faceInd,:),space);
+
+
+% Check if wholehead is requested
+%--------------------------------------------------------------------------
+if(~wholehead)
+    C= scalp.vertices(:,3)>(lp);
+    scalp = spm_mesh_split(scalp,C);
+end
+% Face Positions
+%--------------------------------------------------------------------------
+[Nv,Nf]= spm_mesh_normals(scalp,true);
+posi = zeros(size(scalp.faces));
+cog = mean(scalp.vertices);
+
+for i = 1:length(posi)
+    whichVerts = scalp.faces(i,:);
+    cos = scalp.vertices(whichVerts,:);
+    posi(i,:) = mean(cos);   
+end
+
+% Face Orientations 
+%--------------------------------------------------------------------------
+ori = zeros(size(Nf));
+
+for i = 1:length(Nf)
+ad = posi(i,:) + 5*Nf(i,:);
+subtrac = posi(i,:) - 5*Nf(i,:);
+
+d1 = sum((cog - ad).^2);
+d2 = sum((cog - subtrac).^2);
+
+if(d2>d1)
+    ori(i,:) = -Nf(i,:);
+else
+    ori(i,:) = Nf(i,:);
+end
+end
+
+
+% Find what face we're on
+%--------------------------------------------------------------------------
+faceInd = zeros(size(pos,1),1);
+for i = 1:length(pos)
+    [mi,ind] = min(sqrt(sum(bsxfun(@minus,posi,pos(i,:)).^2,2)));
+    faceInd(i)=ind;
+end
+
+
+% add points if faces are empty and not near a sensor
+%--------------------------------------------------------------------------
+
+for i = 1:length(posi)
+p=posi(i,:);
+di= sort(sqrt(sum(bsxfun(@minus,pos,p).^2,2)));
+if(di(1)>(space))
+    pos = [pos;p];
+    faceInd= [faceInd;i];
+end
+end
+% return
+%--------------------------------------------------------------------------
+
+ori = ori(faceInd,:);
+pos = pos+ori*offset;
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                           Custom Meshes                                 %                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ function D = opm_customMeshes(S)
+% wrapper for adding custom meshes to MEG object
+% FORMAT D = spm_opm_customMeshes(S)
+%   S               - input structure
+% Fields of S:
+%   S.D             - Valid MEG object         - Default: 
+%   S.cortex        - Cortical mesh file       - Default: Use inverse normalised cortical mesh
+%   S.scalp         - Scalp mesh file          - Default: Use inverse normalised scalp mesh
+%   S.oskull        - Outer skull mesh file    - Default: Use inverse normalised outer skull mesh
+%   S.iskull        - Inner skull mesh file    - Default: Use inverse normalised inner skull mesh
+%   S.template      - is mesh in MNI space?    - Default: 0
+% Output:
+%  D           - MEEG object 
+%--------------------------------------------------------------------------
+
+%- Default values & argument check
+%--------------------------------------------------------------------------
+if ~isfield(S, 'D'),           error('MEG object needs to be supplied'); end
+if ~isfield(S, 'cortex'),      S.cortex = []; end
+if ~isfield(S, 'scalp'),       S.scalp = []; end
+if ~isfield(S, 'oskull'),      S.oskull = []; end
+if ~isfield(S, 'iskull'),      S.iskull = []; end
+if ~isfield(S, 'template'),    S.template = 0; end
+
+D = S.D;
+if ~isfield(D.inv{1}.mesh,'sMRI')
+  error('MEG object needs to be contain inverse normalised meshes already') 
+end
+
+%- add custom scalp and skull meshes if supplied
+%--------------------------------------------------------------------------
+if ~isempty(S.scalp)
+    D.inv{1}.mesh.tess_scalp = S.scalp;
+end
+
+if ~isempty(S.oskull)
+    D.inv{1}.mesh.tess_oskull = S.oskull;
+end
+
+if ~isempty(S.iskull)
+    D.inv{1}.mesh.tess_iskull = S.iskull;
+end
+
+%- add custom cortex and repalce MNI cortex with warped cortex
+%--------------------------------------------------------------------------
+if ~isempty(S.cortex)
+    D.inv{1}.mesh.tess_ctx = S.cortex;
+    if(S.template)
+        D.inv{1}.mesh.tess_mni = S.cortex;
+    else
+        defs.comp{1}.inv.comp{1}.def = {D.inv{1}.mesh.def};
+        defs.comp{1}.inv.space = {D.inv{1}.mesh.sMRI};
+        defs.out{1}.surf.surface = {D.inv{1}.mesh.tess_ctx};
+        defs.out{1}.surf.savedir.savesrc = 1;
+        out = spm_deformations(defs);
+        D.inv{1}.mesh.tess_mni  = export(gifti(out.surf{1}), 'spm');
+    end
+end
+save(D);
+
+end   
