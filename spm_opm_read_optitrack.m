@@ -7,6 +7,7 @@ function [opti] = spm_opm_read_optitrack(S)
 %                     lines of file are header
 %   S.avPos         - flag to average pos              -Deafult: 1
 %   S.optiTrigger   - optiTrack Trigger                -Deafult: no default
+%   S.upsample      - new smaplign rate of data        -Deafult: 10
 %   S.cleanupThresh - threshold to clean optitrack     -Default: don't clean     
 %
 % Output: opto - output Structure
@@ -20,6 +21,7 @@ function [opti] = spm_opm_read_optitrack(S)
 if ~isfield(S, 'fname'),         error('fname needs to be provided');end
 if ~isfield(S, 'headerlength'),  S.headerlength = 8; end
 if ~isfield(S, 'avPos'),         S.avPos = 1; end
+if ~isfield(S, 'upsample'),      S.upsmaple = 10; end
 if ~isfield(S, 'cleanupThresh'), S.cleanupThresh = []; end
 
 if  isfield(S, 'optiTrigger')  
@@ -28,6 +30,11 @@ else
     interpolate = 0;
 end
 
+if  isfield(S, 'upsample')  
+    ups = 1; 
+else 
+    ups = 0;
+end
 
 %-find start of data
 %--------------------------------------------------------------------------
@@ -79,6 +86,8 @@ motion = optiInterp;
 motion(1:beginSamp-1,:)=fill;
 fs = 1/mean(diff(S.triggerTime));
 time= S.triggerTime;
+opti.time=time;
+opti.fs= fs;
 end
 
 % Cleanup
@@ -87,8 +96,10 @@ end
 
 %-Output Struct
 %--------------------------------------------------------------------------
-
+if ups
+    motion = resample(motion,S.upsample,1);
+    opti.fs= fs*S.upsample;
+end
 opti.motion= motion;
-opti.fs= fs;
-opti.time=time;
+
 end
