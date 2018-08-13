@@ -550,6 +550,7 @@ end
 
 % set the filename and save
 Dout = fname(Dout,outMat);
+Dout = path(Dout,a);
 Dout.save;
 end
 
