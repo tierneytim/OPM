@@ -1,6 +1,6 @@
-function [D] = spm_opm_epochTrigger(S)
-% Epoch OPM data based on triggers in the file.
-% FORMAT D = spm_opm_create(S)
+function [D] = spm_opm_epoch_trigger(S)
+% Epoch M/EEG data based on triggers (channel type is TRIG) in the file.
+% FORMAT D = spm_opm_epoch_trigger(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                    - Default: no Default
