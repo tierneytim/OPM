@@ -306,12 +306,12 @@ D = opm_convert(S.data,S.fname,S.fs,S.scale);
 % scaling of the triggers
 if isfield(S ,'trig')
     D(trigInd,:,:)= binTrig;
-    save(D)
+    save(D);
 end
 
 if isfield(S ,'other')
     D(physInd,:,:)= S.other;
-    save(D)
+    save(D);
 end
 %-Scalp Extraction
 %--------------------------------------------------------------------------
