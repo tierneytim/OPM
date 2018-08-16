@@ -236,7 +236,7 @@ OPMs are magnetometers and not gradiometers which makes them somewhat more susce
 S=[]
 S.D=D;
 S.confounds={'REF'};
-D = spm_opm_denoise(S);
+D = spm_opm_synth_gradiometer(S);
 ```
 
 Crucially this function works in an object oriented fashion. The S.confounds argument searches for channel types that with the corresponding label and models these channels as effects of no interest. This framework should therefore be easily extended to include motion estimate from optical tracking cameras simply by changing the S.confounds variable. 
@@ -368,7 +368,7 @@ S.D=D;
 S.confounds={'REF'};
 S.gs=1;
 S.derivative=1;
-D = spm_opm_denoise(S);
+D = spm_opm_synth_gradiometer(S);
 
 %% Detecting outlier Trials
 S=[];

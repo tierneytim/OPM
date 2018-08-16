@@ -57,5 +57,5 @@ S.D=D;
 S.confounds={'REF';'PHYS'};
 S.gs=0;
 S.derivative=1;
-dD = spm_opm_denoise(S);
+dD = spm_opm_synth_gradiometer(S);
 

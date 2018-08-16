@@ -49,7 +49,7 @@ S.D=D;
 S.confounds={'REF'};
 S.gs=0;
 S.derivative=1;
-D = spm_opm_denoise(S);
+D = spm_opm_synth_gradiometer(S);
 %% Detecting outlier Trials
 S=[];
 S.D=D;

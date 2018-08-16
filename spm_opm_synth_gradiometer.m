@@ -1,5 +1,5 @@
-function D= spm_opm_denoise(S)
-% FORMAT D = spm_opm_denoise(S)
+function D= spm_opm_synth_gradiometer(S)
+% FORMAT D = spm_opm_synth_gradiometer(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                       - Default: no Default
@@ -12,6 +12,9 @@ function D= spm_opm_denoise(S)
 %  D           - denoised MEEG object (also written to disk)
 % _________________________________________________________________________
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+
+% Tim Tierney
+
 
 %-Set default values
 %--------------------------------------------------------------------------
