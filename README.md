@@ -222,7 +222,7 @@ S =[];
 S.D=D;
 S.timewin=[-100 300];
 S.condLabels= {'Median Nerve'};
-D= spm_opm_epochTrigger(S);
+D= spm_opm_epoch_trigger(S);
 ```
 
 <a name="d3"></a>
@@ -360,7 +360,7 @@ D = spm_eeg_filter(S);
 S =[];
 S.D=D;
 S.timewin=[-100 300];
-D= spm_opm_epochTrigger(S);
+D= spm_opm_epoch_trigger(S);
 
 %% denoising
 S=[];
