@@ -7,10 +7,8 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 ## Table of contents
 1. [Preliminaries and Warranty](#a)
 2. [Data Import](#b)
-	1. [Reading Labview Files](#b1)
-	2. [Converting Raw Data](#b2)
-	3. [Incorporating Triggers](#b3)
-	4. [Other Settings](#b4)
+	1. [Sensor level OPM data](#b1)
+	2. [Source level OPM data](#b2)
 3. [Preprocessing](#d)
 	1. [Filtering](#d1)
 	2. [Epoching](#d2)
@@ -37,7 +35,7 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 <a name="a"></a>
 ## Preliminaries and Warranty
 
-For  this code to run you must have [SPM12](http://www.fil.ion.ucl.ac.uk/spm/software/spm12/) added to Matlab's path. To run these examples you will need to run this code snippet. This will add SPM12 and the simulation toolbox to the path. It will also change the directory to the test data folder.
+For  this code to run you must have [SPM12](http://www.fil.ion.ucl.ac.uk/spm/software/spm12/) added to Matlab's path. To run these examples you will need to run this code snippet. This will add SPM12 and the simulation toolbox to the path. It will also change the directory to the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
 
 
 ```matlab
@@ -61,134 +59,43 @@ However, before you run this code you should know that it is licensed under a GN
 
 
 <a name="b1"></a>
-### Reading OPM data 
+### Sensor level OPM data
 
-While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv file. This tab separated text file should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG.
+While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv and a meg.json file. This files should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG. Code to create a dataset suitable for sensor level analysis is given below. The files can be found in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
 
 ```matlab
 S =[];
 S.data = 'meg.bin';
 S.channels='channels.tsv';
+S.meg='meg.json'
 D = spm_opm_create(S);
 ```
 
-
-
-<a name="b2"></a>
-### Converting Raw Data
-
-
-The simplest way to create an MEG object is to supply data in a matrix form to the function `spm_opm_create`. However, there is a lot of metadata that needs to be supplied in order to create a fully compliant SPM MEEG object. In the first instance we need to know what channels are contained in the `lbv.B` matrix. This is indicated by the use of a `pinout` file which is a  `tab delimted.txt file`. This file is supplied as an argument to `spm_opm_create`. This file  contains the labels of the OPM sensors in the second column and the column number of the `lbv.B` matrix in which this data are stored in the first column. A properly formatted `pinout` file should look like this when viewed in a text editor.
-
-
-<p align="center">
-<img src="readme/pinoutExample.PNG" width="600"/>
-</p>
-
-
-To locate the source of the neural activity we need to know where these sensors are relative to the brain. The way we have addressed this issue is by creating custom made helmets to house our sensors. We know exactly where these sensor slots are relative to the brain because we created these helmets using MRI images. An example of one of these helmets is given below. 
-
-
-<p align="center">
-<img src="readme/scannerCast.JPG" width="600"/>
-</p>
-
-The way we get this information into SPM is by using another another `tab delimted .txt file` which is also suppled to `spm_opm_create` as an argument. This file contains 7 Columns. The first six columns provide position(x,y,z) and orientation(x,y,z) Information in the world space of some brain image. The last column gives the label of each individual slot. This text file should look something like this when properly formatted.
-
-
-<p align="center">
-<img src="readme/locExample.PNG" width="600"/>
-</p>
-
-
-
-
-However, in some cases not all the data is usable. For instance the `lbv.B` variable contains data from 36 OPM sensors measuring both radially and tangentially to the head and 8 trigger channels (36x2+8=80). For this experiment we only recorded data from 13 sensors measuring radially to the head along with four reference sensors. Therefore, we only need to extract 17 columns from the `B` matrix. However to do this we need to know the labels of the sensors we used and also their position relative to the brain. 
-
-
-The  file used to accomplish this is also a `tab delimted.txt file`. This file  serves three purposes. The first is that it tells us which of the sensors were used. This information is stored in the first column. This information can then be mapped to the `S.pinout` file to only select the desired sensors. The second column of this files tells us two things. The first is which sensors are reference sensors. This should be indicated by placing the label `REF` next to a reference sensor. The final purpose of this column are to tell us where the sensors are. This is done by placing the corresponding label from the position file next to a sensor. A properly formatted file should look like this.
-
-
-<p align="center">
-<img src="readme/posExample.PNG" width="600"/>
-</p>
-
-
-If all three of these files are suppled to `spm_opm_create` when you run the following code snippet you should get  a full formatted SPM MEEG object with 17 channels. Note that the the first text file gets supplied to `S.pinout`, the second to `S.pos` and the third to `S.sensorsUsed`. Also in this example the data needs to be transposed as SPM accepts data in the format (channels,time,trials) where as labview outputs in the form (time,channels) Also we must supply the structural MRI file from which the sensor positions were created.
-
+### Source level OPM data
+To go further than a sensor level analysis more metadata is required. Two files are necessary to achieve this aim. The first is a 'positions.tsv' file. This should give coordinates and orientations of the sensors. The coordinate system of these sensors should be defined in the coordsystem.json file. The format of which is described in [BIDS specification](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) and example file for both of these is available in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData). Lastly, a structural MRI is required to compute the MEG forward model. Code is given below as an example of how these files can be utilised.
 
 ```matlab
 S =[];
-S.data = lbv.B';
-S.pinout= 'OPMpinout_20171018';
-S.pos = 'SEF_coarse';
-S.sensorsUsed='OPM2cast_MedianNerve';
-S.sMRI= 'msMQ0484_orig.img';
+S.data = 'meg.bin';
+S.coordystem='coordsystem.json';
+S.positions='positions.tsv';
+S.channels='channels.tsv';
+S.meg='meg.json';
+S.sMRI='T1w.nii';
 D = spm_opm_create(S);
-```
-
-<a name="b3"></a>
-### Incorporating Triggers
 
 
-While the previous code snippet  allowed for the creation of SPM MEEG objects it did not show how to handle events of interest. This can be done by taking advantage of the `S.trig` argument in `spm_opm_create`. By way of example the `lbv.deciamlTrigs` matrix contains 1 trigger channel. This can be supplied to `spm_opm_create` This  can be seen in the following code snippet.
 
-
-``` matlab
-S =[];
-S.data = lbv.B';
-S.trig = lbv.decimalTrigs';
-S.pinout= 'OPMpinout_20171018';
-S.pos = 'SEF_coarse';
-S.sensorsUsed='OPM2cast_MedianNerve';
-S.sMRI= 'msMQ0484_orig.img';
-D = spm_opm_create(S);
-```
-
-
-By default `spm_opm_create` labels these triggers as `TRIG1`, `TRIG2`, `TRIG3`... and this can be verified by using the display feature from the `SPM` GUI, selecting the dataset and looking at the `OTHER` tab.
-
-<p align="center">
-<img src="readme/triggers.PNG" width="600"/>
-</p>
-
-
-<a name="b4"></a>
-### Other Settings
-There are some other settings of `spm_opm_create` that are important for data import. These include specifying the sampling frequency: `S.fs` and the scale factor: `S.scale`. The scale factor is the factor by which the MEG data is multiplied by to convert to units of `fT`
-
-```matlab
-S =[];
-S.data = lbv.B';
-S.trig = lbv.decimalTrigs';
-S.fs =1200;
-S.scale = 1e6/2.7;
-S.pinout= 'OPMpinout_20171018';
-S.pos = 'SEF_coarse';
-S.sensorsUsed='OPM2cast_MedianNerve';
-S.sMRI= 'msMQ0484_orig.img';
-D = spm_opm_create(S);
-```
-
-Running the previous code snippet should generate a SPM MEEG object that we can run source localization on.  The output of this code snippet should look something like this.
-
-
-<p align="center">
-<img src="readme/coregSensors.PNG" width="600"/>
-</p>
-
- 
 <a name="d"></a>
 ## Preprocessing
 
-A number of preprocessing steps can be optionally applied to OPM data in any order you want. Here is an example of one pipeline.
+A number of preprocessing steps can be optionally applied to OPM data in any order you want(similar to any MEG dataset). Here is an example of one pipeline.
 
 
 <a name="d1"></a>
 ### Filtering
 
 Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 80 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. Note this will filter both the reference sensors and the measurement sensors but not the trigger channels.
-
 
 ```matlab
 S = [];
