@@ -61,19 +61,15 @@ However, before you run this code you should know that it is licensed under a GN
 
 
 <a name="b1"></a>
-### Reading Labview Files 
+### Reading OPM data 
 
-While OPM data may come in many native formats currently the UCL/UoN native file format is a `labview text file` format. As such a helper function to read these Labview files is provided. If any other file format is used the user needs to write a read function that will read this file into a matrix in Matlab. The function has a number of arguments that need to be changed depending on the file format.  The `S.nchannels` argument specifies the number of columns in the `labview file`. The `S.headerlength` argument specifies the the number of lines of text that contain header information. The `S.timeind` argument specifies the index of the time variable. If there is no time variable set this value as 0. Triggers embedded in the labview file can be interpreted in 2 ways. the triggers can be interpreted as binary in which case the channels identified by `S.binaryTriggerInds` are simply thresholded using `S.trigThresh` and returned in the `lbv` object. The other option is to interpret the triggers identified by `S.decimalTriggerInds` as decimal. This means that the function will attempt to combine these triggers in such a way to allow for values other than 1 or 0. One final point to note is that this function natively accepts `.lvm` files or zipped `.lvm` files. Running the code snippet bellow will return  a labview struct: `lbv` which contains all data and triggers. 
+While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv file. This tab separated text file should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG.
 
 ```matlab
-S = [];
-S.filename= 'QZFM_6.zip';
-S.nchannels=81;
-S.trigThresh=4;
-S.decimalTriggerInds=74:81;
-S.binaryTriggerInds=[];
-S.timeind=1;
-lbv = spm_opm_read_lvm(S);
+S =[];
+S.data = 'meg.bin';
+S.channels='channels.tsv';
+D = spm_opm_create(S);
 ```
 
 
