@@ -10,10 +10,9 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 	1. [Sensor level OPM data](#b1)
 	2. [Source level OPM data](#b2)
 3. [Preprocessing](#d)
-	1. [Filtering](#d1)
-	2. [Epoching](#d2)
-	3. [Synthetic Gradiometry](#d3)
-	4. [Detect Outlier Trials](#d4)
+	1. [Filtering](#d1) 
+	2. [Synthetic Gradiometry](#d2)
+	3. [Epoching](#d3)
 4. [Sensor Space Analysis](#e)
 	1. [Evoked Response](#e1)
 	2. [Time Frequency Analysis](#e2)
@@ -95,7 +94,7 @@ A number of preprocessing steps can be optionally applied to OPM data in any ord
 <a name="d1"></a>
 ### Filtering
 
-Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 80 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. Note this will filter both the reference sensors and the measurement sensors but not the trigger channels.
+Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 80 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. 
 
 ```matlab
 S = [];
@@ -107,32 +106,11 @@ S.dir = 'twopass';
 S.order = 2;
 D = spm_eeg_filter(S);
 ```
-
-We can verify this by once again looking  at SPM display and highlighting the `OTHER` tab
-
-<p align="center">
-<img src="readme/filterExample.PNG" width="600"/>
-</p>
-
 <a name="d2"></a>
-### Epoching
-
-To epoch the data we just need to tell SPM the time windows(in ms) we want to analyze and SPM will extract the data around all triggers in order to epoch the data. In order for this to work there needs to be at least 1 channel in the MEEG object that has the type `TRIG`. If you import triggers using `spm_opm_create` this will be the case. 
-
-
-``` Matlab
-S =[];
-S.D=D;
-S.timewin=[-100 300];
-S.condLabels= {'Median Nerve'};
-D= spm_opm_epoch_trigger(S);
-```
-
-<a name="d3"></a>
 ### Synthetic Gradiometry
 
 
-OPMs are magnetometers and not gradiometers which makes them somewhat more susceptible to environmental interference than gradiometers. To mitigate this effect we construct `Synthetic Gradiometers` by regressing the signal in the reference sensors from the signal in the scalp sensors. This can be done on a trial by trial basis or across the whole scanning session. If epoched data is supplied the it will take place on a trial by trial basis.  An example of how you might do this is given below. 
+OPMs are magnetometers and not gradiometers which makes them somewhat more susceptible to environmental interference than gradiometers. To mitigate this effect we construct `Synthetic Gradiometers` by regressing the signal in a set of reference sensors from the signal in the scalp sensors. This can be done on a trial by trial basis or across the whole scanning session. If epoched data is supplied the it will take place on a trial by trial basis.  In this case we will use the whole session data An example of how you might do this is given below. 
 
 
 ``` matlab
@@ -144,26 +122,20 @@ D = spm_opm_synth_gradiometer(S);
 
 Crucially this function works in an object oriented fashion. The S.confounds argument searches for channel types that with the corresponding label and models these channels as effects of no interest. This framework should therefore be easily extended to include motion estimate from optical tracking cameras simply by changing the S.confounds variable. 
 
+<a name="d3"></a>
+### Epoching
 
-<a name="d4"></a>
-### Detect Outlier Trials
-
-Unfortunately,even after performing the synthetic gradiometry there still may be some effects of interference in the data. These effects may make some trials unusable so we provide code to identify and remove outlier trials. 
+To epoch the data we just need to tell SPM the time windows(in ms) we want to analyze and SPM will extract the data around all triggers in order to epoch the data. In order for this to work there needs to be at least 1 channel in the MEEG object that has the type `TRIG`. 
 
 
-```matlab
-S=[];
+``` Matlab
+S =[];
 S.D=D;
-S.thresh=3;
-D = spm_opm_removeOutlierTrials(S);
+S.timewin=[-100 300];
+S.condLabels= {'Median Nerve'};
+D= spm_opm_epoch_trigger(S);
 ```
 
-The above code snippet will remove trials marked as outliers and produce a figure to indicate which trials have been removed.
-
-
-<p align="center">
-<img src="readme/outlier.png" width="600"/>
-</p>
 
 <a name="e"></a>
 ## Sensor Space Analysis
@@ -226,30 +198,13 @@ spm('defaults', 'eeg')
 addpath('OPM')
 dir = '\OPM\testData';
 cd(dir)
-
-%% Reading labview
-S = [];
-S.filename= 'QZFM_6.zip';
-S.nchannels=81;
-S.trigThresh=4;
-S.decimalTriggerInds=74:81;
-S.binaryTriggerInds=[];
-S.timeind=1;
-lbv = spm_opm_read_lvm(S);
-
-%% Conversion
+%% read data
 S =[];
-S.data = lbv.B';
-S.trig = lbv.decimalTrigs';
-S.fs =1200;
-S.scale = 1e6/2.7;
-S.pinout= 'OPMpinout_20171018';
-S.pos = 'SEF_coarse';
-S.sensorsUsed='OPM2cast_MedianNerve';
-S.sMRI= 'msMQ0484_orig.img';
+S.data = 'meg.bin';
+S.sMRI='T1w.nii';
 D = spm_opm_create(S);
 
-%% filtering
+%% filter the data
 S = [];
 S.D = D;
 S.type = 'butterworth';
@@ -259,25 +214,17 @@ S.dir = 'twopass';
 S.order = 2;
 D = spm_eeg_filter(S);
 
+%% denoising
+S=[];
+S.D=D;
+S.confounds={'REF'};
+D = spm_opm_synth_gradiometer(S);
+
 %% epoch the data
 S =[];
 S.D=D;
 S.timewin=[-100 300];
 D= spm_opm_epoch_trigger(S);
-
-%% denoising
-S=[];
-S.D=D;
-S.confounds={'REF'};
-S.gs=1;
-S.derivative=1;
-D = spm_opm_synth_gradiometer(S);
-
-%% Detecting outlier Trials
-S=[];
-S.D=D;
-S.thresh=3;
-D = spm_opm_removeOutlierTrials(S);
 
 %% Average
 S =[];
@@ -289,6 +236,7 @@ S=[];
 S.D=D;
 S.timewin=[-100 -20];
 D = spm_eeg_bc(S);
+
 ```
 
 <a name="c"></a>
