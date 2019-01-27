@@ -61,7 +61,7 @@ However, before you run this code you should know that it is licensed under a GN
 <a name="b1"></a>
 ### Sensor level OPM data
 
-While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv and a meg.json file. This files should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG. Code to create a dataset suitable for sensor level analysis is given below. The files can be found in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
+While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv and a meg.json file. These files should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG. Code to create a dataset suitable for sensor level analysis is given below. The files can be found in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
 
 ```matlab
 S =[];
@@ -83,7 +83,7 @@ S.channels='channels.tsv';
 S.meg='meg.json';
 S.sMRI='T1w.nii';
 D = spm_opm_create(S);
-
+```
 
 
 <a name="d"></a>
