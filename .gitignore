@@ -8,3 +8,4 @@ testScripts/*local.m
 
 *.asv
 !testData/testCustom.gii
+!testData/T1w.nii
