@@ -29,7 +29,7 @@ if ~isfield(S, 'condLabels')
     args =[];
     args.base='Cond';
     args.n=nTrigs;
-    S.condLabels=createLabels(args);
+    S.condLabels=spm_create_labels(args);
 end
 
 if(size(S.timewin,1)<nTrigs)
