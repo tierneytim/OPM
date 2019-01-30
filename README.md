@@ -15,19 +15,14 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 	3. [Epoching](#d3)
 4. [Sensor Space Analysis](#e)
 	1. [Evoked Response](#e1)
-	2. [Time Frequency Analysis](#e2)
-5. [Source Space Analysis](#f)
-	1. [Dipole Fitting](#f1)
-	2. [Distributed Source Inversion on a Mesh](#f2)
-	3. [Distributed Source Inversion in a Volume](#f3)
-6. [A Whole Script](#h)
-7. [Simulation](#c)
+5. [A Whole Script](#h)
+6. [Simulation](#c)
 	1. [MNI space ](#c1)
 	2. [Whole head MNI space](#c2)
 	3. [Individual Subject](#c3)
 	4. [Individual Subject with fixed Sensor Positions](#c4)
 	5. [Individual Subject with Custom Cortical Mesh](#c5)	
-8. [Contributing Code](#g)
+7. [Contributing Code](#g)
 
 
 
@@ -164,25 +159,6 @@ D = spm_eeg_bc(S);
 <img src="readme/evokedresponse.PNG" width="600"/>
 </p>
 
-
-<a name="e2"></a>
-### Time Frequency Analysis
-Coming soon!
-
-<a name="f"></a>
-## Source Space Analysis
-
-<a name="f1"></a>
-### Dipole Fitting
-Coming soon!
-
-<a name="f2"></a>
-### Distributed Source Inversion on a Mesh
-Coming soon!
-
-<a name="f3"></a>
-### Distributed Source Inversion in a Volume
-Coming soon!
 
 
 <a name="h"></a>
