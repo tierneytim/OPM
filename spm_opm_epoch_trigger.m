@@ -73,6 +73,6 @@ args.D = S.D;
 args.trl = trl;
 args.conditionlabels =cond;
 args.bc = 0;
-args.prefix = 'e_';
+args.prefix = 'e';
 D = spm_eeg_epochs(args);
 end
