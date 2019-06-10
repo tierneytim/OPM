@@ -21,7 +21,7 @@ function D = spm_opm_synth_gradiometer(S)
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_synth_gradiometer.m 7414 2018-09-07 11:00:29Z spm $
+% $Id: spm_opm_synth_gradiometer.m 7613 2019-06-10 16:24:45Z tim $
 
 
 %-Set default values
