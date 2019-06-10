@@ -235,7 +235,7 @@ fig.Color=[1,1,1];
 ```
 
 <p align="center">
-<img src="readme/EvokedResponse2.PNG" width="600"/>
+<img src="readme/EvokedResponse2.png" width="600"/>
 </p>
 
 
