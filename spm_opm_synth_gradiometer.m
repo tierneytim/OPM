@@ -5,13 +5,16 @@ function D = spm_opm_synth_gradiometer(S)
 %  fields of S:
 %   S.D             - SPM MEEG object                       - Default: no Default
 %   S.confounds     - n x 1 cell array containing           - Default: REF
-%                     channel types used for denoising.
-%   S.derivative    - flag to denoise using derivatives     - Default: 1
+%                     channel types(or names:regex allowed)  
+%   S.derivative    - flag to denoise using derivatives     - Default: 0
 %   S.gs            - flag to denoise using global signal   - Default: 0
-%   S.prefix        - string prefix for output MEEG object  - Default 'd'
-%   S.lp            - 1xn matrix containing lowpass cutoff  - Default: no filter applied to references
-%   S.hp            - 1xn matrix containing highpass cutoff - Default: no filter applied to references
-%   S.filtord       - IIR filter order(butterworth)         - Default: 5
+%   S.prefix        - string prefix for output MEEG object  - Default 'd_'
+%   S.lp            -  n x 1 vector of low pass cutoffs     - Default: no filter
+%                      (applied to confounds only)                               
+%   S.hp            -  n x 1 vector with highpass cutoff    - Default: no filter
+%                      (applied to confounds only)
+%   S.Y             - m x 1 cell array containing           - Deafualt: 'MEG' 
+%                     channel types(or names:regex allowed)
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %__________________________________________________________________________
@@ -26,19 +29,16 @@ function D = spm_opm_synth_gradiometer(S)
 errorMsg = 'an MEEG object must be supplied.';
 if ~isfield(S, 'D'),          error(errorMsg); end
 if ~isfield(S, 'confounds'),  S.confounds = {'REF'}; end
-if ~isfield(S, 'derivative'), S.derivative = 1; end
+if ~isfield(S, 'derivative'), S.derivative = 0; end
 if ~isfield(S, 'gs'),         S.gs = 0; end
 if ~isfield(S, 'prefix'),     S.prefix = 'd'; end
 if ~isfield(S, 'Y'),          S.Y = {'MEG'}; end
 if ~isfield(S, 'lp'),         S.lp=0; end
 if ~isfield(S, 'hp'),         S.hp=0; end
-if ~isfield(S, 'filtord'),    S.filtord=5; end
 
 %- Determine X and Y
 %--------------------------------------------------------------------------
 filtlp = [];
-lpord=[];
-hpord=[];
 filthp = [];
 refInd = [];
 
@@ -65,6 +65,7 @@ end
 
 % now select channeltypes to denoise
 megind=S.D.indchantype(S.Y);
+
 % now check if denoising refers to specific channels
 megind=[megind S.D.indchannel(S.Y)];
 
@@ -88,11 +89,11 @@ for i =1:Ntrials
     for j =1:size(filt,1)
         
         if filthp(j)>0
-            filt(j,:) = ft_preproc_highpassfilter(filt(j,:),S.D.fsample,filthp(j),S.filtord,'but','twopass','reduce');
+            filt(j,:) = ft_preproc_highpassfilter(filt(j,:),S.D.fsample,filthp(j),5,'but','twopass','reduce');
         end
         %  optional low pass filter for references
         if filtlp(j)>0
-            filt(j,:) = ft_preproc_lowpassfilter(filt(j,:),S.D.fsample,filtlp(j),S.filtord,'but','twopass','reduce');
+            filt(j,:) = ft_preproc_lowpassfilter(filt(j,:),S.D.fsample,filtlp(j),5,'but','twopass','reduce');
         end
     end
     reference = filt'; 
