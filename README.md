@@ -11,8 +11,10 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 	2. [Source level OPM data](#b2)
 3. [Preprocessing](#d)
 	1. [Filtering](#d1) 
-	2. [Synthetic Gradiometry](#d2)
-	3. [Epoching](#d3)
+	2. [Power Spectral Density](#dp)
+	3. [Synthetic Gradiometry: Wideband](#dw)
+	4. [Synthetic Gradiometry: Narrowband](#dn)
+	5. [Epoching](#d3)
 4. [Sensor Space Analysis](#e)
 	1. [Evoked Response](#e1)
 5. [A Whole Script](#h)
@@ -89,23 +91,41 @@ A number of preprocessing steps can be optionally applied to OPM data in any ord
 <a name="d1"></a>
 ### Filtering
 
-Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 80 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. 
+Temporal filtering can be applied to remove the effects of high or low frequency interference. In this case we filter between 1 and 100 Hz using a 2nd order butterworth filter. The following code snippet should filter the data we created in the previous step. 
 
 ```matlab
 S = [];
 S.D = D;
 S.type = 'butterworth';
 S.band = 'bandpass';
-S.freq = [1 80];
+S.freq = [2 100];
 S.dir = 'twopass';
 S.order = 2;
 D = spm_eeg_filter(S);
 ```
-<a name="d2"></a>
-### Synthetic Gradiometry
+<a name="dp"></a>
+### Power Spectral Density
+Having filtered the data (or beforehand) it is often useful to examine the Power Spectral Density(PSD) which tells us how  much variance can be attributed to each frequency band. When the PSD is integrated over a specific band it should integrate to the variance of the signal in that band. However, in the neuroimaging literature it is often the square root of the PSD that is reported to assess the variability in a given frequency band. We show an example of how to calculate this with the code below. The most important argument of this function is the `triallength` argument which governs the length of the epochs the spetra are averaged over.  
 
+```matlab
+S=[];
+S.D=D;
+S.triallength=3000;
+S.bc=1;
+S.channels='MEG';
+S.plot=1;
+spm_opm_psd(S);
+xlim([1, 100])
+ylim([1, 1000])
+```
+<p align="center">
+<img src="readme/MagSpectrum.png" width="600" height="452"/>
+</p>
+What  should be clear from the figure is that there are interfering signals at 20Hz, 32Hz and 50Hz. In order to lessen the impact of these interfering signals  we perform synthetic gradiometry. 
 
-OPMs are magnetometers and not gradiometers which makes them somewhat more susceptible to environmental interference than gradiometers. To mitigate this effect we construct `Synthetic Gradiometers` by regressing the signal in a set of reference sensors from the signal in the scalp sensors. This can be done on a trial by trial basis or across the whole scanning session. If epoched data is supplied the it will take place on a trial by trial basis.  In this case we will use the whole session data An example of how you might do this is given below. 
+<a name="dw"></a>
+### Synthetic Gradiometry: Wideband
+OPMs are magnetometers and not gradiometers which makes them somewhat more susceptible to environmental interference than gradiometers. To mitigate this effect we construct `Synthetic Gradiometers` by regressing the signal in a set of reference sensors from the signal in the scalp sensors. This can be done on a trial by trial basis or across the whole scanning session. If epoched data is supplied the it will take place on a trial by trial basis.  In this case we will use the whole session data. An example of how you might do this is given below. 
 
 
 ``` matlab
@@ -114,8 +134,52 @@ S.D=D;
 S.confounds={'REF'};
 D = spm_opm_synth_gradiometer(S);
 ```
+<p align="center">
+<img src="readme/wideSpectra.png" width="600" height="452"/>
+</p>
+When we plot the PSD of this dataset we notice that while the interfering signals have been reduced in magnitude the 32 Hz and 50Hz peak is still quite noticeable. This is because we have regressed the wideband signal in reference sensors from the data. This will only work will if all the interference comes from one source. To improve upon this result we must do narrowband gradiometry
 
-Crucially this function works in an object oriented fashion. The S.confounds argument searches for channel types that with the corresponding label and models these channels as effects of no interest. This framework should therefore be easily extended to include motion estimate from optical tracking cameras simply by changing the S.confounds variable. 
+<a name="dw"></a>
+### Synthetic Gradiometry: Narrowband
+The implementation of the narrowband gradiometry is similar to wideband gradiometry in that both are linear regression but differ in the regressors used. In the narrowband method filtered versions of the regressors are used instead. If necessary multiple regressors are created by filtering the same regressors to different bands. The code to do this differs only very slightly from the previous code. The main difference is that `S.confounds` has now got multiple entries indicating that these regressors should be filtered to different narrowbands as indicated by `S.lp` and `S.hp`. 
+
+``` matlab
+%% denoising
+S=[];
+S.D=D;
+S.lp=[25, 34, 53];
+S.hp=[15,30, 47];
+S.confounds={'REF','REF','REF'};
+D = spm_opm_synth_gradiometer(S);
+```
+
+<p align="center">
+<img src="readme/narrowSpectra.png" width="600" height="452"/>
+</p>
+
+This time the PSD looks much cleaner and no longer has the the 20Hz and 32Hz peaks. Unfortunately It couldn't completely correct for the 50Hz peak (even though the magnitude has been reduced by a factor of 10). In these cases for the peaks that can't be corrected for with gradiometry a notch filter might be appropriate.  
+
+
+As a final note on this function, it is not restricted to selecting channels by type(as has been done here). If reference sensors haven't been marked in the dataset once can select the sensors by name. This should allow for flexible use of this function to regress any confound from the data as long as it is listed as a channel in the `channels.tsv` file. 
+
+``` matlab
+chans = {'CL','CM','CO','CP'};
+lp = [repmat(24,4,1),repmat(34,4,1),repmat(53,4,1)];
+lp =  [25, 34, 53];
+hp =  [15, 28, 47];
+
+S=[];
+ S.D=fD;
+ S.lp=[repmat(24,4,1),repmat(34,4,1),repmat(53,4,1)];
+ S.hp=[repmat(15,4,1),repmat(30,4,1),repmat(47,4,1)];
+ S.confounds={chans{1:4} chans{1:4} chans{1:4} };
+ d2D = spm_opm_synth_gradiometer(S);
+```
+While this is the most cumbersome approach(it requires specifying a lowpass and a highpass cutoff for every sensor for every band). It offers a nice degree of flexibility and replicates exactly the results obtained by selecting channels by type. 
+
+<p align="center">
+<img src="readme/selectbyChan.png" width="600" height="452"/>
+</p>
 
 <a name="d3"></a>
 ### Epoching
@@ -155,8 +219,23 @@ S.timewin=[-100 -20];
 D = spm_eeg_bc(S);
 ```
 
+we can then plot this evoked response with the following bit of code
+
+```matlab
+inds = selectchannels(D,'MEG');
+figure()
+plot(D.time(),bD(inds,:,:)')
+xlabel('Time(ms)')
+ylabel('Field(fT)')
+ax = gca; % current axes
+ax.FontSize = 13;
+ax.TickLength = [0.02 0.02];
+fig= gcf;
+fig.Color=[1,1,1];
+```
+
 <p align="center">
-<img src="readme/evokedresponse.PNG" width="600"/>
+<img src="readme/EvokedResponse2.PNG" width="600"/>
 </p>
 
 
@@ -169,11 +248,9 @@ Here we put all the steps together into 1 script for you to try out.
 ```matlab
 %% Housekeeping
 clear all
-addpath('spm12')
-spm('defaults', 'eeg')
-addpath('OPM')
-dir = '\OPM\testData';
+dir = 'OPM\testData';
 cd(dir)
+
 %% read data
 S =[];
 S.data = 'meg.bin';
@@ -185,34 +262,78 @@ S = [];
 S.D = D;
 S.type = 'butterworth';
 S.band = 'bandpass';
-S.freq = [1 80];
+S.freq = [2 100];
 S.dir = 'twopass';
-S.order = 2;
-D = spm_eeg_filter(S);
+S.order = 5;
+fD = spm_eeg_filter(S);
+
+%% PSD
+S=[];
+S.D=fD;
+S.triallength=3000;
+S.bc=1;
+S.channels='MEG';
+S.plot=1;
+spm_opm_psd(S);
+xlim([1, 100])
+ylim([1, 1000])
 
 %% denoising
 S=[];
-S.D=D;
-S.confounds={'REF'};
-D = spm_opm_synth_gradiometer(S);
+S.D=fD;
+S.lp=[25, 34, 53];
+S.hp=[15,30, 47];
+S.confounds={'REF','REF','REF'};
+d2D = spm_opm_synth_gradiometer(S);
+
+%% PSD
+S=[];
+S.D=d2D;
+S.triallength=3000;
+S.bc=1;
+S.channels='MEG';
+S.plot=1;
+spm_opm_psd(S);
+xlim([1, 100])
+ylim([1, 1000])
 
 %% epoch the data
 S =[];
-S.D=D;
+S.D=d2D;
 S.timewin=[-100 300];
-D= spm_opm_epoch_trigger(S);
+eD= spm_opm_epoch_trigger(S);
 
 %% Average
 S =[];
-S.D=D;
-D =spm_eeg_average(S);
+S.D=eD;
+mD =spm_eeg_average(S);
 
 %% baseline correct
 S=[];
-S.D=D;
+S.D=mD;
 S.timewin=[-100 -20];
-D = spm_eeg_bc(S);
+bD = spm_eeg_bc(S);
 
+%% plot 
+inds = selectchannels(bD,'MEG');
+figure()
+plot(bD.time(),bD(inds,:,:)')
+xlabel('Time(s)')
+ylabel('Field(fT)')
+ax = gca; % current axes
+ax.FontSize = 13;
+ax.TickLength = [0.02 0.02];
+fig= gcf;
+fig.Color=[1,1,1];
+
+
+%% delete
+delete(D)
+delete(fD)
+delete(dD)
+delete(eD)
+delete(mD)
+delete(bD)
 ```
 
 <a name="c"></a>
