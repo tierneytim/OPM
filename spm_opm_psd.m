@@ -1,6 +1,6 @@
-function [po,freq] = spm_eeg_psd(S)
-% Denoise OPM data
-% FORMAT D = spm_opm_synth_gradiometer(S)
+function [po,freq] = spm_opm_psd(S)
+% Compute PSD for OPM data(for checking noise floor) 
+% FORMAT D = spm_opm_psd(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                       - Default: no Default
@@ -17,7 +17,7 @@ function [po,freq] = spm_eeg_psd(S)
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
 % Tim Tierney
-% $Id$
+% $Id: spm_opm_psd.m 7611 2019-06-10 11:53:54Z tim $
 
 %-ArgCheck
 %--------------------------------------------------------------------------
@@ -32,14 +32,14 @@ if ~isfield(S, 'D'),             error('D is required'); end
 
 %-epoch dataset
 %--------------------------------------------------------------------------
-if size(D,3)>1
+if size(S.D,3)>1
     eD=S.D;
 else
     args =[];
     args.D= S.D;
-    args.trialength=S.trialength;
+    args.trialength=S.triallength;
     args.bc=S.bc;
-    eD = spm_eeg_epochs(S);
+    eD = spm_eeg_epochs(args);
 end
 %- set window
 %--------------------------------------------------------------------------
@@ -59,7 +59,6 @@ for j = 1:nepochs
     Btemp = Btemp.*wind;
     mu=mean(Btemp);
     zf = bsxfun(@minus,Btemp,mu);
-    nchan = size(zf,2);
     if(S.bc)
         fzf = zf;
     else
@@ -73,9 +72,9 @@ for j = 1:nepochs
     freq = 0:fs/size(fzf,1):fs/2;
     odd=mod(size(fzf,1),2)==1;
     if(odd)
-        psdx(2:end) = 2*psdx(2:end);
+        psdx(2:end) = sqrt(2)*psdx(2:end);
     else
-        psdx(2:end-1) = 2*psdx(2:end-1);
+        psdx(2:end-1) = sqrt(2)*psdx(2:end-1);
     end
     pow(:,:,j) =psdx;
 end
@@ -89,7 +88,7 @@ po = median(pow(:,chans,:),3);
 delete(eD);
 if(S.plot)
     figure()
-    p1= semilogy(freq,po,'LineWidth',2);
+    semilogy(freq,po,'LineWidth',2);
     hold on
     xp2 =0:round(freq(end));
     yp2=ones(1,round(freq(end))+1)*S.constant;
