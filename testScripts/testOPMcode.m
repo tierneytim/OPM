@@ -10,6 +10,7 @@ cd(dir)
 S =[];
 S.data = 'meg.bin';
 S.sMRI='T1w.nii';
+S.precision = 'double';
 D = spm_opm_create(S);
 
 %% filter the data
@@ -17,17 +18,22 @@ S = [];
 S.D = D;
 S.type = 'butterworth';
 S.band = 'bandpass';
-S.freq = [1 80];
+S.freq = [2 100];
 S.dir = 'twopass';
-S.order = 2;
+S.order = 5;
 fD = spm_eeg_filter(S);
 delete(D)
 %% denoising
+chans = {'(CL|CM|CO|CP)','(CL|CM|CO|CP)','(CL|CM|CO|CP)'};
+lp =  [25, 34, 53];
+hp =  [15, 30, 47];
+
 S=[];
-S.D=fD;
-S.confounds={'REF'};
-dD = spm_opm_synth_gradiometer(S);
-delete(fD)
+ S.D=fD;
+ S.lp=lp;
+ S.hp=hp;
+ S.confounds=chans;
+ dD = spm_opm_synth_gradiometer(S);
 %% epoch the data
 S =[];
 S.D=dD;
@@ -45,4 +51,21 @@ S.D=mD;
 S.timewin=[-100 -20];
 bD = spm_eeg_bc(S);
 delete(mD)
+%% plot 
+inds = selectchannels(bD,'MEG');
+figure()
+plot(bD.time(),bD(inds,:,:)')
+xlabel('Time(ms)')
+ylabel('Field(fT)')
+ax = gca; % current axes
+ax.FontSize = 13;
+ax.TickLength = [0.02 0.02];
+fig= gcf;
+fig.Color=[1,1,1];
+maxmag = round(max(max(bD(:,:,:))));
 
+if(maxmag<970 &&  maxmag>950)
+    display('integartion test passed')
+else
+    display('integartion test failed')
+end
