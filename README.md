@@ -57,13 +57,14 @@ However, before you run this code you should know that it is licensed under a GN
 <a name="b1"></a>
 ### Sensor level OPM data
 
-While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv and a meg.json file. These files should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG. Code to create a dataset suitable for sensor level analysis is given below. The files can be found in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
+While OPM data may come in many native formats currently the UCL native file format is a simple binary file that contains the magnetometer output. In order to read this file and assign appropriate labels, units and channel types to the dataset some metadata is required. This should be provided in the form of a channels.tsv and a meg.json file. One also needs to specify the precision of the data  in the `S.precision`(default is 'single' but in this case the data is stored as'double') The metadata files should conform to the standards recommended by  [BIDS](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) specification for MEG. Code to create a dataset suitable for sensor level analysis is given below. The files can be found in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData).
 
 ```matlab
 S =[];
 S.data = 'meg.bin';
 S.channels='channels.tsv';
-S.meg='meg.json'
+S.meg='meg.json';
+S.precision='double';
 D = spm_opm_create(S);
 ```
 
@@ -78,6 +79,7 @@ S.positions='positions.tsv';
 S.channels='channels.tsv';
 S.meg='meg.json';
 S.sMRI='T1w.nii';
+S.precision='double';
 D = spm_opm_create(S);
 ```
 
@@ -160,22 +162,22 @@ D = spm_opm_synth_gradiometer(S);
 This time the PSD looks much cleaner and no longer has the the 20Hz and 32Hz peaks. Unfortunately It couldn't completely correct for the 50Hz peak (even though the magnitude has been reduced by a factor of 10). In these cases for the peaks that can't be corrected for with gradiometry a notch filter might be appropriate.  
 
 
-As a final note on this function, it is not restricted to selecting channels by type(as has been done here). If reference sensors haven't been marked in the dataset once can select the sensors by name. This should allow for flexible use of this function to regress any confound from the data as long as it is listed as a channel in the `channels.tsv` file. 
+As a final note on this function, it is not restricted to selecting channels by type(as has been done here). If reference sensors haven't been marked in the dataset once can select the sensors by name(or by using regular expressions). This should allow for flexible use of this function to regress any confound from the data as long as it is listed as a channel in the `channels.tsv` file. 
 
 ``` matlab
-chans = {'CL','CM','CO','CP'};
-lp = [repmat(24,4,1),repmat(34,4,1),repmat(53,4,1)];
+%% denoising
+chans = {'(CL|CM|CO|CP)','(CL|CM|CO|CP)','(CL|CM|CO|CP)'};
 lp =  [25, 34, 53];
-hp =  [15, 28, 47];
+hp =  [15, 30, 47];
 
 S=[];
  S.D=fD;
- S.lp=[repmat(24,4,1),repmat(34,4,1),repmat(53,4,1)];
- S.hp=[repmat(15,4,1),repmat(30,4,1),repmat(47,4,1)];
- S.confounds={chans{1:4} chans{1:4} chans{1:4} };
- d2D = spm_opm_synth_gradiometer(S);
+ S.lp=lp;
+ S.hp=hp;
+ S.confounds=chans;
+ dD = spm_opm_synth_gradiometer(S);
 ```
-While this is the most cumbersome approach(it requires specifying a lowpass and a highpass cutoff for every sensor for every band). It offers a nice degree of flexibility and replicates exactly the results obtained by selecting channels by type. 
+While this is a bit of a more cumbersome approach it offers a nice degree of flexibility and replicates exactly the results obtained by selecting channels by type. 
 
 <p align="center">
 <img src="readme/selectbyChan.png" width="600" height="452"/>
@@ -255,6 +257,7 @@ cd(dir)
 S =[];
 S.data = 'meg.bin';
 S.sMRI='T1w.nii';
+S.precision='double';
 D = spm_opm_create(S);
 
 %% filter the data
