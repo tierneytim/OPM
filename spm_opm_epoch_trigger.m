@@ -1,5 +1,5 @@
-function [D] = spm_opm_epoch_trigger(S)
-% Epoch M/EEG data based on triggers (channel type is TRIG) in the file.
+function D = spm_opm_epoch_trigger(S)
+% Epoch M/EEG data based on supplied triggers or triggers in file;
 % FORMAT D = spm_opm_epoch_trigger(S)
 %   S               - input structure
 %  fields of S:
@@ -12,12 +12,14 @@ function [D] = spm_opm_epoch_trigger(S)
 %                     labels
 % Output:
 %  D           - epoched MEEG object (also written to disk)
-%
-% _________________________________________________________________________
+%__________________________________________________________________________
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
+% Tim Tierney
+% $Id: spm_opm_epoch_trigger.m 7779 2020-02-05 13:53:14Z tim $
 
-% set Defaults
+
+%-Set Defaults
 %--------------------------------------------------------------------------
 if ~isfield(S, 'D'),       error('D is required'); end
 cTypes= chantype(S.D);
@@ -36,7 +38,7 @@ if(size(S.timewin,1)<nTrigs)
     S.timewin= repmat(S.timewin,nTrigs,1);
 end
 
-% create trl and cond matrices
+%-Create trl and cond matrices
 %--------------------------------------------------------------------------
 trl=zeros(0,3);
 cond ={};
@@ -63,7 +65,7 @@ for i=1:nTrigs
     condTemp =repmat({S.condLabels{i}},nevents(i),1);  % Replicate codition lable accross events
     cond = {cond{:,:},condTemp{:,1}}';                 % Combine condition labels accross conditions
     
-end;
+end
 
 
 % Actually do the epoching now
@@ -73,6 +75,5 @@ args.D = S.D;
 args.trl = trl;
 args.conditionlabels =cond;
 args.bc = 0;
-args.prefix = 'e';
+args.prefix = 'e_';
 D = spm_eeg_epochs(args);
-end
