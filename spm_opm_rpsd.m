@@ -17,7 +17,7 @@ function [shield,f] = spm_opm_rpsd(S)
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_psd.m 7647 2019-07-25 13:58:53Z tim $
+% $Id: spm_opm_rpsd.m 7782 2020-02-11 11:33:49Z tim $
 
 %-ArgCheck
 %--------------------------------------------------------------------------
