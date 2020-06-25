@@ -141,29 +141,48 @@ end
 try % to load a channels file
     posOri = spm_load(S.positions);
     positions =1;
-catch 
-    try % to load a BIDS channel file 
-       posOri = spm_load(posFile);
-       positions =1;
+catch
+    try % to load a BIDS channel file
+        posOri = spm_load(posFile);
+        positions =1;
     catch
-       positions =0;
-    end      
+        try % to assign a matrix of positions
+            if(ismatrix(S.positions))
+                posOri=[];
+                posOri.Px=S.positions(:,1);
+                posOri.Py=S.positions(:,2);
+                posOri.Pz=S.positions(:,3);
+                posOri.Ox=S.positions(:,4);
+                posOri.Oy=S.positions(:,5);
+                posOri.Oz=S.positions(:,6);
+                args=[];
+                args.base='Chan';
+                args.n= size(S.positions,1);
+                posOri.name= spm_create_labels(args);
+                positions=1;
+            else
+                positions=0;
+            end
+        catch
+            positions=0;
+        end
+    end
 end
-
 %- Forward model Check
 %----------------------------------------------------------------------
-subjectSource  = (positions|isfield(S,'space')) & isfield(S,'sMRI');
-subjectSensor = ~subjectSource;
+tempSource  = (positions|isfield(S,'space'));
+subjectSource = tempSource & isfield(S,'sMRI');
 
 if subjectSource
     forward =1;
     template =0;
-elseif subjectSensor
-    forward =0;
-    template =0;
-else
+elseif tempSource
     forward =1;
     template =1;
+    S.sMRI=1;
+else
+    forward =0;
+    template =0;
 end
    
 
@@ -320,7 +339,7 @@ end
 
 %- Coregistration
 %--------------------------------------------------------------------------
-if(subjectSource)
+if(subjectSource|tempSource)
     D = fiducials(D, fid);
     save(D);
     f=fiducials(D);

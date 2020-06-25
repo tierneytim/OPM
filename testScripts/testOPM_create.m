@@ -62,6 +62,13 @@ D = spm_opm_create(S);
 S =[];
 S.cortex = 'testCustom.gii';
 D = spm_opm_create(S);
+
+%% Simulation Example - individual subject,fixed positions
+S =[];
+S.positions = 'positions.tsv';
+S.sMRI= 'T1w.nii';
+D = spm_opm_create(S);
+
 %% merge example
 S =[];
 S.data = 'meg.bin';

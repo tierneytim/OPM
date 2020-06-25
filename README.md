@@ -381,7 +381,7 @@ In some cases you may have already have an individual brain image that you want 
 ```matlab
 S =[];
 S.space = 15;
-S.sMRI= 'msMQ0484_orig.img';
+S.sMRI= 'T1w.nii;
 D = spm_opm_create(S);
 ```
 
@@ -396,8 +396,8 @@ The code to incorporate this information just requires to specify the `pos argum
 
 ```matlab
 S =[];
-S.pos = 'SEF_coarse';
-S.sMRI= 'msMQ0484_orig.img';
+S.positions='positions.tsv';
+S.sMRI= 'T1w.nii';
 D = spm_opm_create(S);
 ```
 <p align="center">
@@ -411,7 +411,7 @@ Other times you may not wish to use the default meshes supplied by SPM and may w
 S =[];
 S.space = 15;
 S.cortex='testCustom.gii';
-S.sMRI= 'msMQ0484_orig.img';
+S.sMRI= 'T1w.nii';
 D = spm_opm_create(S);
 
 ```
