@@ -122,6 +122,7 @@ try % to load a meg file
 catch 
     try % to load a BIDS meg file 
        meg = spm_load(megFile);
+       
     catch
         try % to use meg struct  
            meg = S.meg;
@@ -141,10 +142,16 @@ end
 try % to load a channels file
     posOri = spm_load(S.positions);
     positions =1;
+    S = rmfield(S,'space');
 catch
     try % to load a BIDS channel file
         posOri = spm_load(posFile);
-        positions =1;
+        if(isfield(S,'sMRI'))
+            positions =1;
+        else
+            positions =0;
+        end
+        S = rmfield(S,'space');
     catch
         try % to assign a matrix of positions
             if(ismatrix(S.positions))
@@ -321,10 +328,10 @@ if subjectSource
             M.pnt = D.inv{1}.mesh.fid.pnt;
         catch % DEFAULT: transform between fiducials and anatomy is identity
             fid.fid.label = {'nas', 'lpa', 'rpa'}';
-            fid.fid.pnt = [0 0 0; -1 0 0; 1 0 0];
+            fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:); % George O'Neill
             fid.pos= [];
             M = fid;
-            M.pnt = D.inv{1}.mesh.fid.pnt;
+            M.pnt = D.inv{1}.mesh.fid.pnt; % George O'Neill
         end
     end
 end
