@@ -98,11 +98,11 @@ for j = 1:nepochs
     freq = 0:fs/size(fzf,1):fs/2;
     odd=mod(size(fzf,1),2)==1;
     if(odd)
-        psdx(2:end) = sqrt(2)*psdx(2:end);
-         %psdx(2:end) = psdx(2:end);
+        %psdx(2:end) = sqrt(2)*psdx(2:end);
+        psdx(2:end) = psdx(2:end);
     else
-        psdx(2:end-1) = sqrt(2)*psdx(2:end-1);
-        %psdx(2:end-1) = psdx(2:end-1);
+        %psdx(2:end-1) = sqrt(2)*psdx(2:end-1);
+        psdx(2:end-1) = psdx(2:end-1);
     end
     pow(:,:,j) =psdx;
 end
@@ -125,6 +125,8 @@ if(S.plot)
     yp2=ones(1,round(freq(end))+1)*S.constant;
     p2 =plot(xp2,yp2,'--k');
     p2.LineWidth=2;
+    p3=semilogy(freq,median(pow'),'LineWidth',2);
+    p3.Color='k';
     xlabel('Frequency (Hz)')
     labY = ['$$PSD (' S.units ' \sqrt[-1]{Hz}$$)'];
     ylabel(labY,'interpreter','latex')
