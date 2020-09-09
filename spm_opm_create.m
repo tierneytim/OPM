@@ -1,3 +1,4 @@
+
 function [D,L] = spm_opm_create(S)
 % Read or simulate magnetometer data and optionally set up forward model
 % FORMAT D = spm_opm_create(S)
@@ -48,7 +49,6 @@ if ~isfield(S, 'lead'),        S.lead = 0; end
 if ~isfield(S, 'fs'),          S.fs   = 1000; end
 if ~isfield(S, 'nSamples'),    S.nSamples   = 1000; end
 if ~isfield(S, 'nDens'),       S.nDens   = 40; end
-if ~isfield(S, 'space'),       S.space  = 30; end
 if ~isfield(S, 'offset'),      S.offset  = 6.5; end
 if ~isfield(S, 'data'),        S.data = zeros(1,S.nSamples); end
 if ~isfield(S, 'wholehead'),   S.wholehead = 1; end
