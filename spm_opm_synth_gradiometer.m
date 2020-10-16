@@ -5,18 +5,16 @@ function D = spm_opm_synth_gradiometer(S)
 %  fields of S:
 %   S.D             - SPM MEEG object                       - Default: no Default
 %   S.confounds     - n x 1 cell array containing           - Default: REF
-%                     channel types(or names:regex allowed)
+%                     channel types(or names:regex allowed)  
 %   S.derivative    - flag to denoise using derivatives     - Default: 0
 %   S.gs            - flag to denoise using global signal   - Default: 0
 %   S.prefix        - string prefix for output MEEG object  - Default 'd_'
 %   S.lp            -  n x 1 vector of low pass cutoffs     - Default: no filter
-%                      (applied to confounds only)
+%                      (applied to confounds only)                               
 %   S.hp            -  n x 1 vector with highpass cutoff    - Default: no filter
 %                      (applied to confounds only)
-%   S.Y             - m x 1 cell array containing           - Deafualt: 'MEG'
+%   S.Y             - m x 1 cell array containing           - Deafualt: 'MEG' 
 %                     channel types
-%   S.regress       - flag to perform regression or store   - Default: 1
-%                     the regressors 
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %__________________________________________________________________________
@@ -37,7 +35,6 @@ if ~isfield(S, 'prefix'),     S.prefix = 'd'; end
 if ~isfield(S, 'Y'),          S.Y = {'MEG'}; end
 if ~isfield(S, 'lp'),         S.lp=0; end
 if ~isfield(S, 'hp'),         S.hp=0; end
-if ~isfield(S, 'regress'),    S.regress=1; end
 
 %- Determine X and Y
 %--------------------------------------------------------------------------
@@ -81,9 +78,9 @@ winSize = size(S.D,2);
 
 % loop (inefficient due to continued memory reallocation but ...)
 for i =1:Ntrials
-    % add a mean column to the reference regressors
-    intercept = ones(winSize,1);
-    reference = ref(:,:,i)';
+     % add a mean column to the reference regressors
+     intercept = ones(winSize,1);
+     reference = ref(:,:,i)';
     
     
     filt = reference';
@@ -97,59 +94,44 @@ for i =1:Ntrials
             filt(j,:) = ft_preproc_lowpassfilter(filt(j,:),S.D.fsample,filtlp(j),5,'but','twopass','reduce');
         end
     end
-    reference = filt';
+    reference = filt'; 
     
-    if S.regress
-        % optionally add derivatives
-        if(S.derivative)
-            drefer = diff(reference);
-            drefer = [drefer(1,:); drefer];
-            reference = [drefer reference];
-        end
-        % optionally add global signal
-        if(S.gs)
-            trial     = S.D(megind,:,i)';
-            gsrefer   = mean(trial,2);
-            reference = [gsrefer reference];
-        end
-        % reference = detrend(reference,'constant');
-        reference= [reference ones(size(reference,1),1)];
-        
-        % reference is column major so transpose sensors
-        beta = pinv(reference)*S.D(megind,:,i)';
-        megres(:,:,i) = (S.D(megind,:,i)'- reference*beta)';
-        res = S.D(:,:,:); % new file will only have selected sensors changed
-        res(megind,:,:) = megres;
+       % optionally add derivatives
+     if(S.derivative)
+        drefer = diff(reference);
+        drefer = [drefer(1,:); drefer];
+        reference = [drefer reference];
+     end
+     % optionally add global signal 
+    if(S.gs)
+        trial     = S.D(megind,:,i)';
+        gsrefer   = mean(trial,2);
+        reference = [gsrefer reference];
     end
+    % reference = detrend(reference,'constant');
+    reference= [reference ones(size(reference,1),1)];
+    
+    % reference is column major so transpose sensors
+    beta = pinv(reference)*S.D(megind,:,i)';
+    megres(:,:,i) = (S.D(megind,:,i)'- reference*beta)';
 end
+
 
 %- Return Outputs
 %--------------------------------------------------------------------------
+res = S.D(:,:,:); % new file will only have selected sensors changed
+res(megind,:,:) = megres;
+
+% make sure output has the singleton dimension if matrix supplied
+if ((length(size(res)))==2)
+    outsize = [size(res) 1];
+else
+    outsize = size(res);
+end
 
 
 inFile  = fnamedat(S.D);
 [a,b]   = fileparts(inFile);
 outfile = fullfile(a,[S.prefix b '.dat']);
-
-labs= chanlabels(S.D);
-un = units(S.D);
-if(S.regress)
-    % make sure output has the singleton dimension if matrix supplied
-    if ((length(size(res)))==2)
-        outsize = [size(res) 1];
-    else
-        outsize = size(res);
-    end
-    
-    D = clone(S.D,outfile,outsize);
-    D(:,:,:) = res;
-else
-    outsize(1)=outsize(1)+size(reference,2);
-    D = clone(S.D,outfile,outsize);
-    D = chanlabels(D,1:size(S.D,1),channels.name);
-    Dtemp = units(Dtemp,1:size(Dtemp,1),channels.units);
-    Dtemp = chantype(Dtemp,1:size(Dtemp,1),channels.type);
-    
-end
-
-end
+D = clone(S.D,outfile,outsize);
+D(:,:,:) = res;

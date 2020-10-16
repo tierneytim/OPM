@@ -17,58 +17,6 @@ S.positions='positions.tsv';
 S.channels='channels.tsv';
 S.mef='meg.json';
 D = spm_opm_create(S);
-%% Source Example 
-S =[];
-S.data = 'meg.bin';
-S.sMRI='T1w.nii';
-D = spm_opm_create(S);
-
-%% Simulation Example - default
-S =[];
-D = spm_opm_create(S);
-
-%% Simulation Example - no data, but positions and MRI file supplied
-S =[];
-S.positions = 'positions.tsv';
-S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
-
-%% Simulation Example - Individual MRI, custom spacing between sensors
-S =[];
-S.space = 25;
-S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
-
-%% Simulation Example - Individual MRI, custom mesh file
-S =[];
-S.space = 25;
-S.cortex='testCustom.gii';
-S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
-
-%% Simulation Example - Individual MRI, not wholehead
-S =[];
-S.space = 25;
-S.wholehead = 0;
-S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
-
-%% Simulation Example - Template MRI file, custom  sensor spacing
-S =[];
-S.space = 25;
-D = spm_opm_create(S);
-
-%% Simulation Example - Template MRI file, custom mesh
-S =[];
-S.cortex = 'testCustom.gii';
-D = spm_opm_create(S);
-
-%% Simulation Example - individual subject,fixed positions
-S =[];
-S.positions = 'positions.tsv';
-S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
-
 %% merge example
 S =[];
 S.data = 'meg.bin';
@@ -86,3 +34,55 @@ S= [];
 S.D = fis;
 S.recode= 'same';
 D3 = spm_eeg_merge(S);
+%% Source Example 
+S =[];
+S.data = 'meg.bin';
+S.sMRI='T1w.nii';
+D = spm_opm_create(S);
+
+%% Simulation Example - default
+S =[];
+D = spm_opm_create(S);
+
+%% Simulation Example - no data, but positions and MRI file supplied
+S =[];
+S.positions = 'positions.tsv';
+S.sMRI= 'T1w.nii';
+D = spm_opm_sim(S);
+
+%% Simulation Example - Individual MRI, custom spacing between sensors
+S =[];
+S.space = 25;
+S.sMRI= 'T1w.nii';
+D = spm_opm_sim(S);
+
+%% Simulation Example - Individual MRI, custom mesh file
+S =[];
+S.space = 25;
+S.cortex='testCustom.gii';
+S.sMRI= 'T1w.nii';
+D = spm_opm_sim(S);
+
+%% Simulation Example - Individual MRI, not wholehead
+S =[];
+S.space = 25;
+S.wholehead = 0;
+S.sMRI= 'T1w.nii';
+D = spm_opm_sim(S);
+
+%% Simulation Example - Template MRI file, custom  sensor spacing
+S =[];
+S.space = 25;
+D = spm_opm_sim(S);
+
+%% Simulation Example - Template MRI file, custom mesh
+S =[];
+S.cortex = 'testCustom.gii';
+D = spm_opm_sim(S);
+
+%% Simulation Example - individual subject,fixed positions
+S =[];
+S.positions = 'positions.tsv';
+S.sMRI= 'T1w.nii';
+D = spm_opm_sim(S);
+
