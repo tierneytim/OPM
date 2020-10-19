@@ -67,6 +67,15 @@ S.meg='meg.json';
 S.precision='double';
 D = spm_opm_create(S);
 ```
+### Custom File Formats
+As there is no agreed upon file format for OPM data the function `spm_opm_create` also supports the reading of data stored in a matlab matrix (nchannels x nsampples). For this data to interpreted appropriately a channels.tsv file should be provided as well as the sampling rate of the data. 
+
+```matlab
+S.data =Bmat;
+S.channels='channels.tsv';
+S.fs=1200;
+D = spm_opm_create(S);
+```
 
 ### Source level OPM data
 To go further than a sensor level analysis more metadata is required. Two files are necessary to achieve this aim. The first is a 'positions.tsv' file. This should give coordinates and orientations of the sensors. The coordinate system of these sensors should be defined in the coordsystem.json file. The format of which is described in [BIDS specification](https://bids-specification.readthedocs.io/en/latest/04-modality-specific-files/02-magnetoencephalography.html) and example file for both of these is available in the [test data folder](https://github.com/tierneytim/OPM/tree/master/testData). Lastly, a structural MRI is required to compute the MEG forward model. Code is given below as an example of how these files can be utilised.
@@ -82,7 +91,17 @@ S.sMRI='T1w.nii';
 S.precision='double';
 D = spm_opm_create(S);
 ```
+### Custom File Formats
+Similarly this dataset could be created with a custom file format by supplying a matrix and metadata. If you do not supply a `coordsystem.json` file it is assumed that the `positions.tsv` documents positions that are in the same coordinate space as the MRI file. The sampling rate `S.fs` could alternatively be provided with an appropriate BIDS `meg.json` file.
 
+```matlab
+S.data =Bmat;
+S.sMRI='T1w.nii';
+S.channels='channels.tsv';
+S.fs=1200;
+S.positions='positions.tsv';
+D = spm_opm_create(S);
+```
 
 <a name="d"></a>
 ## Preprocessing
@@ -345,12 +364,12 @@ delete(bD)
 
 <a name="c1"></a>
 ### MNI Space
-If you want to simulate MEG data you need to supply sensor positions and  orientations which should be in the same coordinate space as some brain image. If you don not have a brain image or sensor positions(and orientations) you can simulate data on an average template brain with automatically generated positions of fixed spacing using `spm_opm_create`. The following code snippet automatically generates sensors in this average space that are a fixed `space` apart. In this case the spacing is 15mm.
+If you want to simulate MEG data you need to supply sensor positions and  orientations which should be in the same coordinate space as some brain image. If you don not have a brain image or sensor positions(and orientations) you can simulate data on an average template brain with automatically generated positions of fixed spacing using `spm_opm_sim`. The following code snippet automatically generates sensors in this average space that are a fixed `space` apart. In this case the spacing is 15mm.
 
 ```matlab
 S =[];  
 S.space = 15;  
-D = spm_opm_create(S);  
+D = spm_opm_sim(S);  
 ```
 Once you run this code you will generate a figure like this. 
 
@@ -366,7 +385,7 @@ For some simulations you may want the entire scalp surface to be covered. In thi
 S =[];
 S.space = 15;
 S.wholehead=1;
-D = spm_opm_create(S);
+D = spm_opm_sim(S);
 ```
 Running this code snippet should generate a figure like this.
 
@@ -382,7 +401,7 @@ In some cases you may have already have an individual brain image that you want 
 S =[];
 S.space = 15;
 S.sMRI= 'T1w.nii;
-D = spm_opm_create(S);
+D = spm_opm_sim(S);
 ```
 
 <p align="center">
@@ -398,7 +417,7 @@ The code to incorporate this information just requires to specify the `pos argum
 S =[];
 S.positions='positions.tsv';
 S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
+D = spm_opm_sim(S);
 ```
 <p align="center">
 <img src="readme/coregSensors.PNG" width="600"/>
@@ -412,7 +431,7 @@ S =[];
 S.space = 15;
 S.cortex='testCustom.gii';
 S.sMRI= 'T1w.nii';
-D = spm_opm_create(S);
+D = spm_opm_sim(S);
 
 ```
 
