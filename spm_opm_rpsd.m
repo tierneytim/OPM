@@ -69,8 +69,13 @@ p2 = median(p2,3);
 
 %- Ratio (or difference) of corresponding sensor in each dataset
 %--------------------------------------------------------------------------
+if strcmp(S.channels{1},'ALL')
 chan1 = chanlabels(S.D1);
 chan2 = chanlabels(S.D2);
+else
+   chan1 = S.channels;
+chan2 = S.channels; 
+end
 inCommon=zeros(size(p1));
 keep = zeros(size(p1,2),1);
 
