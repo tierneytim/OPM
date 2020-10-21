@@ -1,5 +1,5 @@
 function [D,L] = spm_opm_sim(S)
-% Simulate magnetometer data 
+% Simulate magnetometer data
 % FORMAT D = spm_opm_create(S)
 %   S               - input structure
 % Optional fields of S:
@@ -48,32 +48,31 @@ if ~isfield(S, 'data'),        S.data = zeros(1,S.nSamples); end
 if ~isfield(S, 'wholehead'),   S.wholehead = 1; end
 if ~isfield(S, 'fname'),       S.fname = 'sim_opm'; end
 if ~isfield(S, 'space'),       S.space = 35; end
-      
 
-%- Position File check 
+
+%- Position File check
 %----------------------------------------------------------------------
 try % to load a channels file
     posOri = spm_load(S.positions);
     positions =1;
-    S = rmfield(S,'space');
 catch
     try % to load a BIDS channel file
         posOri = spm_load(posFile);
         positions =1;
     catch
         try % to assign a matrix of positions
-                posOri=[];
-                posOri.Px=S.positions(:,1);
-                posOri.Py=S.positions(:,2);
-                posOri.Pz=S.positions(:,3);
-                posOri.Ox=S.positions(:,4);
-                posOri.Oy=S.positions(:,5);
-                posOri.Oz=S.positions(:,6);
-                args=[];
-                args.base='Chan';
-                args.n= size(S.positions,1);
-                posOri.name= spm_create_labels(args);
-                positions=1;
+            posOri=[];
+            posOri.Px=S.positions(:,1);
+            posOri.Py=S.positions(:,2);
+            posOri.Pz=S.positions(:,3);
+            posOri.Ox=S.positions(:,4);
+            posOri.Oy=S.positions(:,5);
+            posOri.Oz=S.positions(:,6);
+            args=[];
+            args.base='Chan';
+            args.n= size(S.positions,1);
+            posOri.name= spm_create_labels(args);
+            positions=1;
         catch
             positions=0;
         end
@@ -91,7 +90,7 @@ else
     forward =1;
     template =1;
     S.sMRI=1;
-
+    
 end
 
 %- Create temp SPM object of simulated data
@@ -141,7 +140,6 @@ save(D);
 try % create positions and orientations
     pos = [posOri.Px,posOri.Py,posOri.Pz];
     ori = [posOri.Ox,posOri.Oy,posOri.Oz];
-    cl = posOri.name;
 catch % if no postions and orientations provided then create them
     args = [];
     args.D =D;
@@ -153,23 +151,23 @@ catch % if no postions and orientations provided then create them
 end
 
 nSensors=size(pos,1);
-if nSensors>size(S.data,1) %
-    args=[];
-    args.base='Chan';
-    args.n= nSensors;
-    labs= spm_create_labels(args);
-    channels = [];
-    channels.name=labs;
-    channels.type=repmat({'MEG'},nSensors,1);
-    channels.units= repmat({'fT'},nSensors,1);
-    D = clone(D,fnamedat(D),[nSensors,S.nSamples,1],1);
-    D = chanlabels(D,1:size(D,1),channels.name);
-    D = units(D,1:size(D,1),channels.units);
-    D = chantype(D,1:size(D,1),channels.type);
-    cl=chanlabels(D)';
-end
 
-       
+args=[];
+args.base='Chan';
+args.n= nSensors;
+labs= spm_create_labels(args);
+channels = [];
+channels.name=labs;
+channels.type=repmat({'MEG'},nSensors,1);
+channels.units= repmat({'fT'},nSensors,1);
+D = clone(D,fnamedat(D),[nSensors,S.nSamples,1],1);
+D = chanlabels(D,1:size(D,1),channels.name);
+D = units(D,1:size(D,1),channels.units);
+D = chantype(D,1:size(D,1),channels.type);
+cl=chanlabels(D)';
+
+
+
 %-Place Sensors  in object
 %--------------------------------------------------------------------------
 
@@ -230,7 +228,7 @@ if subjectSource
     end
 end
 
-if(template) %make 
+if(template) %make
     fid.fid.label = {'nas', 'lpa', 'rpa'}';
     fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
     fid.pos= []; % headshape field that is left blank (GRB)
@@ -247,65 +245,65 @@ f=fiducials(D);
 f.pnt =zeros(0,3);
 D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
 
-%- 2D view based on mean orientation of sensors 
+%- 2D view based on mean orientation of sensors
 %--------------------------------------------------------------------------
 
-    n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
-    t1=cross(n1,[0 0 1]);
-    t2=cross(t1,n1);
-    pos2d =zeros(size(grad.coilpos,1),2);
-    for i=1:size(grad.coilpos,1)
-        pos2d(i,1)=dot(grad.coilpos(i,:),t1);
-        pos2d(i,2)=dot(grad.coilpos(i,:),t2);
-    end
-     
- nMEG = length(indchantype(D,'MEG'));
-    if nMEG~=size(pos2d,1)
-        m1 = '2D positions could not be set as there are ';
-        m2 =num2str(nMEG);
-        m3 = ' channels but only ';
-        m4 = num2str(size(pos2d,1));
-        m5 =  ' channels with position information.';
-        message = [m1,m2,m3,m4,m5];
-        warning(message);
-    else
-        args=[];
-        args.D=D;
-        args.xy= pos2d';
-        args.label=grad.label;
-        args.task='setcoor2d';
-        D=spm_eeg_prep(args);
-        D.save;
-    end
+n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
+t1=cross(n1,[0 0 1]);
+t2=cross(t1,n1);
+pos2d =zeros(size(grad.coilpos,1),2);
+for i=1:size(grad.coilpos,1)
+    pos2d(i,1)=dot(grad.coilpos(i,:),t1);
+    pos2d(i,2)=dot(grad.coilpos(i,:),t2);
+end
+
+nMEG = length(indchantype(D,'MEG'));
+if nMEG~=size(pos2d,1)
+    m1 = '2D positions could not be set as there are ';
+    m2 =num2str(nMEG);
+    m3 = ' channels but only ';
+    m4 = num2str(size(pos2d,1));
+    m5 =  ' channels with position information.';
+    message = [m1,m2,m3,m4,m5];
+    warning(message);
+else
+    args=[];
+    args.D=D;
+    args.xy= pos2d';
+    args.label=grad.label;
+    args.task='setcoor2d';
+    D=spm_eeg_prep(args);
+    D.save;
+end
 
 %- Foward  model specification
 %--------------------------------------------------------------------------
 
-    D.inv{1}.forward.voltype = S.voltype;
-    D = spm_eeg_inv_forward(D);
-    nverts = length(D.inv{1}.forward.mesh.vert);
-    if(S.lead)
+D.inv{1}.forward.voltype = S.voltype;
+D = spm_eeg_inv_forward(D);
+nverts = length(D.inv{1}.forward.mesh.vert);
+if(S.lead)
     [L,D] = spm_eeg_lgainmat(D,1:nverts);
-    end
-    spm_eeg_inv_checkforward(D,1,1);
+end
+spm_eeg_inv_checkforward(D,1,1);
 
 save(D);
-fprintf('%-40s: %30s\n','Completed',spm('time'));    
+fprintf('%-40s: %30s\n','Completed',spm('time'));
 
 
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                     Create Sensor Array                                 %                          
+%                     Create Sensor Array                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [pos,ori] = opm_createSensorArray(S)
-% Given a scalp surface even samples the surface with sensors 
-% 
+% Given a scalp surface even samples the surface with sensors
+%
 % FORMAT [pos,ori] = spm_opm_createSensorArray(S)
 %   S               - input structure
 % Fields of S:
-%   S.D            - SPM M/EEG object with surface meshes 
+%   S.D            - SPM M/EEG object with surface meshes
 %   S.offset       - distance to place sensors(mm) from scalp surface
-%   S.space        - distance between sensors(mm) 
+%   S.space        - distance between sensors(mm)
 %   S.wholehead    - boolean: Should whole scalp surface should be covered?
 %   S.nDens        - number of density optimisations
 % _________________________________________________________________________
@@ -366,7 +364,7 @@ T= eye(4);
 T(1:3,4)=cog1-cog2+0;
 scalp = spm_mesh_transform(scalp,T);
 
-% Create the sensor array 
+% Create the sensor array
 %--------------------------------------------------------------------------
 args= [];
 args.space=S.space;
@@ -407,7 +405,7 @@ end
 
 % assign orientatation to sensors of closest face normal
 %--------------------------------------------------------------------------
-  ori=zeros(size(pos));
+ori=zeros(size(pos));
 for i =1:length(ori)
     tmp=pos(i,:);
     di=sqrt(sum(bsxfun(@minus,faceP,tmp).^2,2));
@@ -426,21 +424,21 @@ end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                           Custom Meshes                                 %                          
+%                           Custom Meshes                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- function D = opm_customMeshes(S)
+function D = opm_customMeshes(S)
 % wrapper for adding custom meshes to MEG object
 % FORMAT D = spm_opm_customMeshes(S)
 %   S               - input structure
 % Fields of S:
-%   S.D             - Valid MEG object         - Default: 
+%   S.D             - Valid MEG object         - Default:
 %   S.cortex        - Cortical mesh file       - Default: Use inverse normalised cortical mesh
 %   S.scalp         - Scalp mesh file          - Default: Use inverse normalised scalp mesh
 %   S.oskull        - Outer skull mesh file    - Default: Use inverse normalised outer skull mesh
 %   S.iskull        - Inner skull mesh file    - Default: Use inverse normalised inner skull mesh
 %   S.template      - is mesh in MNI space?    - Default: 0
 % Output:
-%  D           - MEEG object 
+%  D           - MEEG object
 %--------------------------------------------------------------------------
 
 %- Default values & argument check
@@ -454,7 +452,7 @@ if ~isfield(S, 'template'),    S.template = 0; end
 
 D = S.D;
 if ~isfield(D.inv{1}.mesh,'sMRI')
-  error('MEG object needs to be contain inverse normalised meshes already') 
+    error('MEG object needs to be contain inverse normalised meshes already')
 end
 
 %- add custom scalp and skull meshes if supplied
@@ -487,6 +485,5 @@ if ~isempty(S.cortex)
     end
 end
 save(D);
- 
- end
- 
+
+end
