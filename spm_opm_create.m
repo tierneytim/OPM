@@ -1,4 +1,4 @@
-function D = spm_opm_create(S)
+function [D,L] = spm_opm_create(S)
 % Read magnetometer data and optionally set up forward model
 % FORMAT D = spm_opm_create(S)
 %   S               - input structure
@@ -19,8 +19,10 @@ function D = spm_opm_create(S)
 %   S.iskull        - Custom inner skull mesh                  - Default: Use inverse normalised inner skull mesh
 %   S.voltype       - Volume conducter Model type              - Default: 'Single Shell'
 %   S.meshres       - mesh resolution(1,2,3)                   - Default: 1
+%   S.lead          - flag to compute lead field   - Default: 0
 % Output:
 %  D           - MEEG object (also written to disk)
+%  L           - Lead field (also written on disk)
 %__________________________________________________________________________
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
@@ -38,6 +40,7 @@ if ~isfield(S, 'iskull'),      S.iskull = []; end
 if ~isfield(S, 'oskull'),      S.oskull = []; end
 if ~isfield(S, 'fname'),       S.fname = 'sim_opm'; end
 if ~isfield(S, 'precision'),   S.precision = 'single'; end
+if ~isfield(S, 'lead'),        S.lead = 0; end
 
 
 %- Read Binary File
@@ -330,6 +333,20 @@ if forward
     D = spm_eeg_inv_forward(D);
     spm_eeg_inv_checkforward(D,1,1);
 end
+save(D);
+
+%- Foward  model specification
+%--------------------------------------------------------------------------
+
+%- Create lead fields
+%--------------------------------------------------------------------------
+D.inv{1}.forward.voltype = S.voltype;
+D = spm_eeg_inv_forward(D);
+nverts = length(D.inv{1}.forward.mesh.vert);
+if(S.lead)
+    [L,D] = spm_eeg_lgainmat(D,1:nverts);
+end
+spm_eeg_inv_checkforward(D,1,1);
 save(D);
 fprintf('%-40s: %30s\n','Completed',spm('time'));
 
