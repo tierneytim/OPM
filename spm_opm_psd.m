@@ -10,6 +10,8 @@ function [po,freq] = spm_opm_psd(S)
 %   S.plot          - boolean to plot or not                - Default: 0
 %   S.units         - units of measurement                  - Default: 'fT'
 %   S.constant      - constant line to draw as reference    - Default: 15
+%   S.wind          - function handle for window            - Default: @hanning
+%
 % Output:
 %   psd             - power spectral density
 %   f               - frequencies psd is sampled at
@@ -30,6 +32,7 @@ if ~isfield(S, 'channels'),      S.channels = 'ALL'; end
 if ~isfield(S, 'plot'),          S.plot = 0; end
 if ~isfield(S, 'D'),             error('D is required'); end
 if ~isfield(S, 'trials'),        S.trials=0; end
+if ~isfield(S, 'wind'),          S.wind=@hanning; end
 
 
 
@@ -71,7 +74,7 @@ N =size(eD,2);
 Nf= ceil((N+1)/2);
 nepochs=size(eD,3);
 pow = zeros(Nf,size(eD,1),nepochs);
-wind  = window(@hanning,size(eD,2));
+wind  = window(S.wind,size(eD,2));
 coFac= max(wind)/mean(wind);
 wind = repmat(wind,1,size(eD,1));
 
