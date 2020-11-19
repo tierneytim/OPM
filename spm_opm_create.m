@@ -59,9 +59,9 @@ catch % if not readable check if it is numeric
     direc = pwd();
     dataFile=S.fname;
     if ~isfield(S, 'channels')
-       error('A channels.tsv file must be supplied'); 
+        error('A channels.tsv file must be supplied');
     end
-
+    
 end
 %- identify potential BIDS Files
 %----------------------------------------------------------------------
@@ -218,7 +218,7 @@ if positions
     pos = [posOri.Px,posOri.Py,posOri.Pz];
     ori = [posOri.Ox,posOri.Oy,posOri.Oz];
     cl = posOri.name;
-        
+    
     grad= [];
     grad.label = cl;
     grad.coilpos = pos;
@@ -229,10 +229,10 @@ if positions
     grad = ft_datatype_sens(grad, 'amplitude', 'T', 'distance', 'mm');
     D = sensors(D, 'MEG', grad);
     save(D);
-
-%- 2D view based on mean orientation of sensors
-%--------------------------------------------------------------------------
-
+    
+    %- 2D view based on mean orientation of sensors
+    %--------------------------------------------------------------------------
+    
     n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
     t1=cross(n1,[0 0 1]);
     t2=cross(t1,n1);
@@ -318,14 +318,15 @@ end
 
 %- Coregistration
 %--------------------------------------------------------------------------
-if(subjectSource||template)
-    D = fiducials(D, fid);
-    save(D);
-    f=fiducials(D);
-    f.pnt =zeros(0,3);
-    D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+if(forward)
+    if(subjectSource||template)
+        D = fiducials(D, fid);
+        save(D);
+        f=fiducials(D);
+        f.pnt =zeros(0,3);
+        D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+    end
 end
-
 %- Foward  model specification
 %--------------------------------------------------------------------------
 if forward
@@ -340,14 +341,16 @@ save(D);
 
 %- Create lead fields
 %--------------------------------------------------------------------------
-D.inv{1}.forward.voltype = S.voltype;
-D = spm_eeg_inv_forward(D);
-nverts = length(D.inv{1}.forward.mesh.vert);
-if(S.lead)
-    [L,D] = spm_eeg_lgainmat(D,1:nverts);
+if(forward)
+    D.inv{1}.forward.voltype = S.voltype;
+    D = spm_eeg_inv_forward(D);
+    nverts = length(D.inv{1}.forward.mesh.vert);
+    if(S.lead)
+        [L,D] = spm_eeg_lgainmat(D,1:nverts);
+    end
+    spm_eeg_inv_checkforward(D,1,1);
+    save(D);
 end
-spm_eeg_inv_checkforward(D,1,1);
-save(D);
 fprintf('%-40s: %30s\n','Completed',spm('time'));
 
 
@@ -380,7 +383,7 @@ if ~isfield(S, 'oskull'),      S.oskull = []; end
 if ~isfield(S, 'iskull'),      S.iskull = []; end
 if ~isfield(S, 'template'),    S.template = 0; end
 
-D = S.D;
+D = S.D;a
 if ~isfield(D.inv{1}.mesh,'sMRI')
     error('MEG object needs to be contain inverse normalised meshes already')
 end
