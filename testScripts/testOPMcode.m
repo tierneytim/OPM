@@ -69,3 +69,31 @@ if(maxmag<970 &&  maxmag>950)
 else
     display('integartion test failed')
 end
+%% mean field test 
+D=spm_eeg_load('mf.mat');
+S=[];
+S.D=D;
+[mfD, Yinds]=spm_opm_mfc(S);
+chans= chanlabels(mfD,Yinds);
+
+S=[];
+S.D=D;
+S.plot=1;
+S.channels=chans;
+S.triallength=2000;
+S.wind=@hanning;
+spm_opm_psd(S);
+xlim([1,100])
+ylim([1,1e4])
+
+S=[];
+S.D=mfD;
+S.plot=1;
+S.channels=chans;
+S.triallength=2000;
+S.wind=@hanning;
+spm_opm_psd(S);
+xlim([1,100])
+ylim([1,1e4])
+
+
