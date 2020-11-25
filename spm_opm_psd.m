@@ -115,10 +115,10 @@ end
 if(S.trials)
 po = pow;
 else
-po = median(pow(:,:,:),3);
+po = mean(pow(:,:,:),3);
 end
 
-pow = median(pow(:,:,:),3);
+pow = mean(pow(:,:,:),3);
 
 if(S.plot)
     figure()
