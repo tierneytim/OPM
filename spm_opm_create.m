@@ -383,7 +383,7 @@ if ~isfield(S, 'oskull'),      S.oskull = []; end
 if ~isfield(S, 'iskull'),      S.iskull = []; end
 if ~isfield(S, 'template'),    S.template = 0; end
 
-D = S.D;a
+D = S.D;
 if ~isfield(D.inv{1}.mesh,'sMRI')
     error('MEG object needs to be contain inverse normalised meshes already')
 end
