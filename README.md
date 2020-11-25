@@ -10,11 +10,12 @@ The code in this toolbox can be used to create SPM MEEG objects from an arbitrar
 	1. [Sensor level OPM data](#b1)
 	2. [Source level OPM data](#b2)
 3. [Preprocessing](#d)
-	1. [Filtering](#d1) 
-	2. [Power Spectral Density](#dp)
-	3. [Synthetic Gradiometry: Wideband](#dw)
-	4. [Synthetic Gradiometry: Narrowband](#dn)
-	5. [Epoching](#d3)
+	1. [Mean Field Correction](#d0)
+	2. [Filtering](#d1) 
+	3. [Power Spectral Density](#dp)
+	4. [Synthetic Gradiometry: Wideband](#dw)
+	5. [Synthetic Gradiometry: Narrowband](#dn)
+	6. [Epoching](#d3)
 4. [Sensor Space Analysis](#e)
 	1. [Evoked Response](#e1)
 5. [A Whole Script](#h)
@@ -106,9 +107,48 @@ D = spm_opm_create(S);
 <a name="d"></a>
 ## Preprocessing
 
-A number of preprocessing steps can be optionally applied to OPM data in any order you want(similar to any MEG dataset). Here is an example of one pipeline.
+A number of preprocessing steps can be optionally applied to OPM data in any order you want(similar to any MEG dataset). Here is an example of some techniques.
+
+<a name="d0"></a>
+### Mean Field Correction
+If the distance between an OPM array and a source of magnetic interference is large relative to the size of the OPM array then the interference will nearly  be constant across space. We can therefore model the interference as a "mean field". This mean field can be modeled and removed by regressing the relative orientations of the OPM array from the data. We provide an example below of how much interference in our magnetically shielded room can be accounted for with such a mean field.
+
+<p align="center">
+<img src="readme/MF.png"  />
+</p>
+
+Much of the low frequency noise is substantially reduced as well as the drift and 50Hz components. This preprocessing step can be applied before or after temporal filtering with little difference. The code to reproduce these figures is below 
 
 
+```matlab
+D=spm_eeg_load('mf.mat');
+S=[];
+S.D=D;
+[mfD, Yinds]=spm_opm_mfc(S);
+chans= chanlabels(mfD,Yinds);
+
+S=[];
+S.D=D;
+S.plot=1;
+S.channels=chans;
+S.triallength=2000;
+S.wind=@hanning;
+spm_opm_psd(S);
+xlim([1,100])
+ylim([1,1e4])
+
+S=[];
+S.D=mfD;
+S.plot=1;
+S.channels=chans;
+S.triallength=2000;
+S.wind=@hanning;
+spm_opm_psd(S);
+xlim([1,100])
+ylim([1,1e4])
+
+
+```
 <a name="d1"></a>
 ### Filtering
 
