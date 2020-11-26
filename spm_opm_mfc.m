@@ -93,6 +93,35 @@ for i =1:length(begs)
     mfD(:,inds,:)=out;
     vars = var(out(Yinds,:),0,2)+vars;
 end
+
+%-Update forward modelling information
+%--------------------------------------------------------------------------
+fprintf('Updating sensor information\n');
+% TODO: Make this more fieldTrip compliant going forward.
+grad = mfD.sensors('MEG');
+grad.tra                = M*grad.tra;
+grad.balance.previous   = grad.balance.current;
+grad.balance.current    = 'mfc'; 
+mfD = sensors(mfD,'MEG',grad);
+% Check if any information in D.inv needs updating.
+% TODO: Update to support multiple invs/forwards/modalities
+if isfield(mfD,'inv')
+    if isfield(mfD.inv{1},'gainmat')
+        fprintf(['Clearing current forward model, please recalculate '...
+            'with spm_eeg_lgainmat\n']);
+        mfD.inv{1} = rmfield(mfD.inv{1},'gainmat');
+    end
+    if isfield(mfD.inv{1},'datareg')
+        mfD.inv{1}.datareg.sensors = grad;
+    end
+    if isfield(mfD.inv{1},'forward')
+        voltype = mfD.inv{1}.forward.voltype;
+        mfD.inv{1}.forward = [];
+        mfD.inv{1}.forward.voltype = voltype;
+        mfD = spm_eeg_inv_forward(mfD,1);
+    end
+end
+
 mfD.save();
 
 %-Bad Channel Check
