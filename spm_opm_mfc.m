@@ -21,6 +21,7 @@ if ~isfield(S, 'D'),             error(errorMsg); end
 if ~isfield(S, 'usebadchans'),   S.usebadchans = 0; end
 if ~isfield(S, 'chunkSize'),     S.chunkSize = 512; end
 if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
+if ~isfield(S, 'balance'),       S.balance = 0; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
@@ -96,6 +97,7 @@ end
 
 %-Update forward modelling information
 %--------------------------------------------------------------------------
+if (S.balance)
 fprintf('Updating sensor information\n');
 % TODO: Make this more fieldTrip compliant going forward.
 grad = mfD.sensors('MEG');
@@ -123,7 +125,7 @@ if isfield(mfD,'inv')
 end
 
 mfD.save();
-
+end
 %-Bad Channel Check
 %--------------------------------------------------------------------------
 fprintf('Checking for unusual channels\n');
