@@ -4,7 +4,10 @@ function [mfD,Yinds] = spm_opm_mfc(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                                - Default: no Default
-%   S.usebadchans   - logical to use channels marked as bad          - Default: 0
+%   S.usebadchans   - logical to correct channels marked as bad      - Default: 0
+%   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
+%   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
+%   S.balance       - logical to update forward model(dev option)    - Default 0
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
@@ -63,9 +66,9 @@ end
 
 
 if (size(Yinds,1)~=size(X,1))
-    error('Mismatch between data size and number of sensors with orientation information');
+    error('data size ~= number of sensors with orientation information');
 else
-  
+    
 %-create ouput dataset object
 %--------------------------------------------------------------------------
 fprintf('Creating output dataset\n');
@@ -90,7 +93,7 @@ for i =1:length(begs)
     inds = begs(i):ends(i);
     out = S.D(:,inds,:);
     Y=out(Yinds,:);
-    out(Yinds,:)=M*Y;  
+    out(Yinds,:)=M*Y;
     mfD(:,inds,:)=out;
     vars = var(out(Yinds,:),0,2)+vars;
 end
@@ -98,33 +101,34 @@ end
 %-Update forward modelling information
 %--------------------------------------------------------------------------
 if (S.balance)
-fprintf('Updating sensor information\n');
-% TODO: Make this more fieldTrip compliant going forward.
-grad = mfD.sensors('MEG');
-grad.tra                = M*grad.tra;
-grad.balance.previous   = grad.balance.current;
-grad.balance.current    = 'mfc'; 
-mfD = sensors(mfD,'MEG',grad);
-% Check if any information in D.inv needs updating.
-% TODO: Update to support multiple invs/forwards/modalities
-if isfield(mfD,'inv')
-    if isfield(mfD.inv{1},'gainmat')
-        fprintf(['Clearing current forward model, please recalculate '...
-            'with spm_eeg_lgainmat\n']);
-        mfD.inv{1} = rmfield(mfD.inv{1},'gainmat');
+    fprintf('Updating sensor information\n');
+    grad = mfD.sensors('MEG');
+    tmpTra= eye(size(grad.coilori,1));
+    tmpTra(sinds,sinds)=M;
+    grad.tra                = tmpTra*grad.tra;
+    grad.balance.previous   = grad.balance.current;
+    grad.balance.current    = 'mfc';
+    mfD = sensors(mfD,'MEG',grad);
+    % Check if any information in D.inv needs updating.
+    % TODO: Update to support multiple invs/forwards/modalities
+    if isfield(mfD,'inv')
+        if isfield(mfD.inv{1},'gainmat')
+            fprintf(['Clearing current forward model, please recalculate '...
+                'with spm_eeg_lgainmat\n']);
+            mfD.inv{1} = rmfield(mfD.inv{1},'gainmat');
+        end
+        if isfield(mfD.inv{1},'datareg')
+            mfD.inv{1}.datareg.sensors = grad;
+        end
+        if isfield(mfD.inv{1},'forward')
+            voltype = mfD.inv{1}.forward.voltype;
+            mfD.inv{1}.forward = [];
+            mfD.inv{1}.forward.voltype = voltype;
+            mfD = spm_eeg_inv_forward(mfD,1);
+        end
     end
-    if isfield(mfD.inv{1},'datareg')
-        mfD.inv{1}.datareg.sensors = grad;
-    end
-    if isfield(mfD.inv{1},'forward')
-        voltype = mfD.inv{1}.forward.voltype;
-        mfD.inv{1}.forward = [];
-        mfD.inv{1}.forward.voltype = voltype;
-        mfD = spm_eeg_inv_forward(mfD,1);
-    end
-end
 
-mfD.save();
+    mfD.save();
 end
 %-Bad Channel Check
 %--------------------------------------------------------------------------
@@ -133,7 +137,8 @@ SD = sqrt(vars)*1e-3;
 for i = 1:length(SD)
     index= indchannel(S.D,usedLabs{i});
     if(SD(i)>S.badChanThresh)
-        fprintf(['Residual on channel ' num2str(index) ', '  usedLabs{i} ': %3.2f pT\n'], SD(i));
+        fprintf(['Residual on channel ' num2str(index) ', '...
+            usedLabs{i} ': %3.2f pT\n'], SD(i));
     end
 end
 
