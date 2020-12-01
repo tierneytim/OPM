@@ -117,7 +117,7 @@ If the distance between an OPM array and a source of magnetic interference is la
 <img src="readme/MF.png"  />
 </p>
 
-Much of the low frequency noise is substantially reduced as well as the drift and 50Hz components. This preprocessing step can be applied before or after temporal filtering with little difference. The code to reproduce these figures is below 
+Much of the low frequency noise is substantially reduced as well as the drift and 50Hz components. This preprocessing step can be applied before or after temporal filtering with little difference. The code to reproduce these figures is below. More specific details of the algorithma are provided in a [preprint](https://www.biorxiv.org/content/biorxiv/early/2020/11/26/2020.11.25.397778.full.pdf)
 
 
 ```matlab
