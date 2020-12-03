@@ -72,7 +72,7 @@ D = spm_opm_create(S);
 As there is no agreed upon file format for OPM data the function `spm_opm_create` also supports the reading of data stored in a matlab matrix (nchannels x nsampples). For this data to interpreted appropriately a channels.tsv file should be provided as well as the sampling rate of the data. 
 
 ```matlab
-Bmat = randn(18,1000); %channel order must match supplied channels.tsv
+Bmat = randn(18,1000); % number of rows in Bmat must be same is number of rows in 'channels.tsv' 
 S.data =Bmat;
 S.channels='channels.tsv';
 S.fs=1200;
@@ -97,7 +97,7 @@ D = spm_opm_create(S);
 Similarly this dataset could be created with a custom file format by supplying a matrix and metadata. If you do not supply a `coordsystem.json` file it is assumed that the `positions.tsv` documents positions that are in the same coordinate space as the MRI file. The sampling rate `S.fs` could alternatively be provided with an appropriate BIDS `meg.json` file.
 
 ```matlab
-Bmat = randn(18,1000); %channel order must match supplied channels.tsv
+Bmat = randn(18,1000); % number of rows in Bmat must be same is number of rows in 'channels.tsv' 
 S.data =Bmat;
 S.sMRI='T1w.nii';
 S.channels='channels.tsv';
