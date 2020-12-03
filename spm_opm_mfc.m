@@ -71,8 +71,10 @@ else
     
 %-create ouput dataset object
 %--------------------------------------------------------------------------
-fprintf('Creating output dataset\n');
+fprintf('Creating output dataset\n'); 
 outname = fullfile(path(S.D),['MF_' fname(S.D)]);
+
+
 mfD = clone(S.D,outname);
 mfD.save();
 
@@ -87,15 +89,19 @@ end
 %-Run on channels needing correction
 %--------------------------------------------------------------------------
 vars = zeros(length(Yinds),1);
+trvar= zeros(length(Yinds),size(S.D,3));
 
-for i =1:length(begs)
-    fprintf(['Modelling mean field chunk # %3.2f of %3.2f\n'],i,length(begs));
-    inds = begs(i):ends(i);
-    out = S.D(:,inds,:);
-    Y=out(Yinds,:);
-    out(Yinds,:)=M*Y;
-    mfD(:,inds,:)=out;
-    vars = var(out(Yinds,:),0,2)+vars;
+for j=1:size(S.D,3)
+    for i =1:length(begs)
+        %  fprintf(['Modelling mean field chunk # %3.2f of %3.2f\n'],i,length(begs));
+        inds = begs(i):ends(i);
+        out = S.D(:,inds,j);
+        Y=out(Yinds,:);
+        out(Yinds,:)=M*Y;
+        mfD(:,inds,j)=out;
+        vars = var(out(Yinds,:),0,2)+vars/length(begs);
+    end
+    trvar(:,j)=vars;
 end
 
 %-Update forward modelling information
@@ -133,7 +139,7 @@ end
 %-Bad Channel Check
 %--------------------------------------------------------------------------
 fprintf('Checking for unusual channels\n');
-SD = sqrt(vars)*1e-3;
+SD = mean(sqrt(trvar),2)*1e-3;
 for i = 1:length(SD)
     index= indchannel(S.D,usedLabs{i});
     if(SD(i)>S.badChanThresh)
