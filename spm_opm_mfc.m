@@ -53,20 +53,9 @@ fprintf('%-40s: %30s\n','Created Design Matrix',spm('time'));
 %--------------------------------------------------------------------------
 M = eye(size(X,1))-X*pinv(X);
 
-
-
-
 %-Get Data indices
 %--------------------------------------------------------------------------
-Yinds = [];
-for i = 1:length(usedLabs)
-    Ytmp=indchannel(S.D,usedLabs{i});
-    if isempty(Ytmp)
-        display([usedLabs{i} ' not found in D object'])
-    end
-    Yinds=[Yinds; Ytmp];
-end
-
+Yinds = indchannel(S.D,usedLabs);
 
 if (size(Yinds,1)~=size(X,1))
     error('data size ~= number of sensors with orientation information');
@@ -76,7 +65,6 @@ else
 %--------------------------------------------------------------------------
 fprintf('Creating output dataset\n'); 
 outname = fullfile(path(S.D),['MF_' fname(S.D)]);
-
 mfD = clone(S.D,outname);
 mfD.save();
 
@@ -108,7 +96,7 @@ for j=1:size(S.D,3)
         out(Yinds,:)=M*Y;
         mfD(:,inds,j)=out;
         
-        % accurate running variance 
+        % accurate running variance for identifying odd channels
         % (https://www.johndcook.com/blog/standard_deviation/)
         for l = 1:length(inds)
             xk = out(Yinds,l);
@@ -151,10 +139,10 @@ if (S.balance)
             mfD = spm_eeg_inv_forward(mfD,1);
         end
     end
-
     mfD.save();
 end
-%-Bad Channel Check
+
+%-Odd Channel Check
 %--------------------------------------------------------------------------
 fprintf('Checking for unusual channels\n');
 SD = mean(sqrt(trvar),2)*1e-3;
