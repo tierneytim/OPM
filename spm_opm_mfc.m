@@ -7,7 +7,7 @@ function [mfD,Yinds] = spm_opm_mfc(S)
 %   S.usebadchans   - logical to correct channels marked as bad      - Default: 0
 %   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
 %   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
-%   S.balance       - logical to update forward model(dev option)    - Default 0
+%   S.balance       - logical to update forward model                - Default 0
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
