@@ -29,13 +29,14 @@ if ~isfield(S, 'balance'),       S.balance = 0; end
 %-Get design matrix
 %--------------------------------------------------------------------------
 try
-    s= sensors(S.D,'MEG');
+    s= sensors(S.D,'MEG'); 
 catch
     error('Could not find sensor positions')
 end
 
 if(S.usebadchans)
     usedLabs= s.label;
+    sinds = 1:length(usedLabs);
 else
     badLabels = chanlabels(S.D,badchannels(S.D));
     indsRem = [];
