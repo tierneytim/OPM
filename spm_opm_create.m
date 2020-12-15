@@ -10,16 +10,16 @@ function [D,L] = spm_opm_create(S)
 %   S.meg           - meg.json file                            - Default: REQUIRED if S.fs is empty
 %   S.precision     - 'single' or 'double'                     - Default: 'single'
 % SOURCE LEVEL INFO
-%   S.coordsystem   - coordsystem.json file                    - Default:
-%   S.positions     - positions.tsv file                       - Default:
-%   S.sMRI          - Filepath to  MRI file                    - Default: uses template
+%   S.coordsystem   - coordsystem.json file                    - Default: transform between sensor space and anatomy is identity
+%   S.positions     - positions.tsv file                       - Default: no Default
+%   S.sMRI          - Filepath to  MRI file                    - Default: no Default
 %   S.cortex        - Custom cortical mesh                     - Default: Use inverse normalised cortical mesh
 %   S.scalp         - Custom scalp mesh                        - Default: Use inverse normalised scalp mesh
 %   S.oskull        - Custom outer skull mesh                  - Default: Use inverse normalised outer skull mesh
 %   S.iskull        - Custom inner skull mesh                  - Default: Use inverse normalised inner skull mesh
 %   S.voltype       - Volume conducter Model type              - Default: 'Single Shell'
 %   S.meshres       - mesh resolution(1,2,3)                   - Default: 1
-%   S.lead          - flag to compute lead field   - Default: 0
+%   S.lead          - flag to compute lead field               - Default: 0
 % Output:
 %  D           - MEEG object (also written to disk)
 %  L           - Lead field (also written on disk)
@@ -43,13 +43,10 @@ if ~isfield(S, 'precision'),   S.precision = 'single'; end
 if ~isfield(S, 'lead'),        S.lead = 0; end
 
 
-%- Read Binary File
+%- identify Binary File
 %----------------------------------------------------------------------
-try % to read data
+try % work out if data is a matrix or a file
     [direc, dataFile] = fileparts(S.data);
-    dat = fopen(S.data);
-    S.data = fread(dat,Inf,S.precision,0,'b');
-    fclose(dat);
     binData=1;
 catch % if not readable check if it is numeric
     if ~isa(S.data,'numeric') % if not numeric throw error
@@ -61,7 +58,6 @@ catch % if not readable check if it is numeric
     if ~isfield(S, 'channels')
         error('A channels.tsv file must be supplied');
     end
-    
 end
 %- identify potential BIDS Files
 %----------------------------------------------------------------------
@@ -82,29 +78,9 @@ catch
         try  % use channel struct if supplied
             channels = S.channels;
         catch % create channel struct
-            warning('A valid channels.tsv file was not found. Setting default type as MEG and unit as fT');
-            args=[];
-            args.base='Chan';
-            args.n= size(S.data,1);
-            labs= spm_create_labels(args);
-            channels = [];
-            channels.name=labs;
-            channels.type=repmat({'MEG'},size(S.data,1),1);
-            channels.units= repmat({'fT'},size(S.data,1),1);
+            error('A valid channels.tsv file or struct was not found');
         end
     end
-end
-
-%- reformat data according to channel info
-%--------------------------------------------------------------------------
-nc = size(channels.name,1);
-
-if binData
-    S.data = reshape(S.data,nc,numel(S.data)/nc);
-elseif nc~=size(S.data,1)
-    error('numer of channels in S.data different to S.channels')
-else
-    S.data =S.data;
 end
 
 %- Check for MEG Info
@@ -114,7 +90,6 @@ try % to load a meg file
 catch
     try % to load a BIDS meg file
         meg = spm_load(megFile);
-        
     catch
         try % to use meg struct
             meg = S.meg;
@@ -123,7 +98,7 @@ catch
                 meg =[];
                 meg.SamplingFrequency=S.fs;
             catch
-                error('A valid meg.json file is required if S.fs is empty');
+                error('A meg.json file is required if S.fs is empty');
             end
         end
     end
@@ -149,49 +124,84 @@ catch
         end
     end
 end
+
 %- Forward model Check
 %----------------------------------------------------------------------
 subjectSource = positions & isfield(S,'sMRI');
 if subjectSource
     forward =1;
     template =0;
-    % elseif positions
-    %     forward =1;
-    %     template =1;
-    %     S.sMRI=1;
-    %     error('template methods not implemented yet') % need to get back to this
 else
     forward =0;
     template =0;
 end
 
-
-%- Create SPM object of simulated or real data
+%- work out data size
 %--------------------------------------------------------------------------
-Dtemp = meeg(size(S.data,1),size(S.data,2),size(S.data,3));
-Dtemp = fsample(Dtemp,meg.SamplingFrequency);
-Dtemp = fname(Dtemp,[dataFile,'.mat']);
-Dtemp = path(Dtemp,direc);
-Dtemp = chanlabels(Dtemp,1:size(Dtemp,1),channels.name);
-Dtemp = units(Dtemp,1:size(Dtemp,1),channels.units);
-Dtemp = chantype(Dtemp,1:size(Dtemp,1),channels.type);
+nChans = size(channels.name,1);
+
+if(binData)
+    fprops= dir(S.data);
+    if(S.precision == 'single')
+        bytesPerSample=4;
+    else
+        bytesPerSample=8;
+    end
+    nSamples = fprops.bytes/(nChans*bytesPerSample);
+    nTrials = 1;
+else
+    nSamples=size(S.data,2);
+    nTrials=size(S.data,3);
+end
+%- Create SPM object 
+%--------------------------------------------------------------------------
+
+D = meeg(nChans,nSamples,nTrials);
+D = fsample(D,meg.SamplingFrequency);
+D = fname(D,[dataFile,'.mat']);
+D = path(D,direc);
+D = chanlabels(D,1:size(D,1),channels.name);
+D = units(D,1:size(D,1),channels.units);
+D = chantype(D,1:size(D,1),channels.type);
 
 %- Overwrite and Save
 %--------------------------------------------------------------------------
 ma = fullfile(direc,[dataFile,'.mat']);
 da = fullfile(direc,[dataFile,'.dat']);
 
-ae = exist(fname(Dtemp),'file')==2;
+ae = exist(fname(D),'file')==2;
 if(ae)
     delete(ma);
     delete(da);
 end
-Dtemp.save();
-% create data file and insert data
-D= blank(Dtemp,[dataFile,'.dat']);
-dim=size(D);
-D(1:dim(1),1:dim(2),1:dim(3)) = S.data;
 D.save();
+
+%- reformat data according to channel info
+%--------------------------------------------------------------------------
+D= blank(D,[dataFile,'.dat']);
+if binData
+     
+    maxMem= 512e6;
+    samplesPerChunk= round(maxMem/(8*nChans));
+    begs= 1:samplesPerChunk:nSamples;
+    ends= begs+samplesPerChunk-1;
+    
+    if(ends(end)>nSamples)
+        ends(end)=nSamples;
+    end
+    
+    dat = fopen(S.data);
+    for j=1:length(begs)
+        asamplesPerChunk=length(begs(j):ends(j));
+        inds= begs(j):ends(j);
+        D(:,inds,1) = fread(dat,[nChans,asamplesPerChunk],S.precision,0,'b');
+    end
+    fclose(dat);
+else
+    % insert provided data
+    D(1:nChans,1:nSamples,1:nTrials) = S.data;
+    D.save();
+end
 
 %- Create Meshes
 %--------------------------------------------------------------------------
@@ -210,7 +220,6 @@ if forward
     D = opm_customMeshes(args);
     save(D);
 end
-
 
 %-Place Sensors  in object
 %--------------------------------------------------------------------------
@@ -231,8 +240,6 @@ if positions
     save(D);
     
     %- 2D view based on mean orientation of sensors
-    %--------------------------------------------------------------------------
-    
     n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
     t1=cross(n1,[0 0 1]);
     t2=cross(t1,n1);
@@ -335,9 +342,6 @@ if forward
     spm_eeg_inv_checkforward(D,1,1);
 end
 save(D);
-
-%- Foward  model specification
-%--------------------------------------------------------------------------
 
 %- Create lead fields
 %--------------------------------------------------------------------------
