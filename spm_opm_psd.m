@@ -1,5 +1,5 @@
-function [po,freq] = spm_opm_psd(S)
-% Compute PSD for OPM data(for checking noise floor) 
+function [po,freq] = spm_opm_psd2(S)
+% Compute PSD for OPM data(for checking noise floor)
 % FORMAT D = spm_opm_psd(S)
 %   S               - input structure
 %  fields of S:
@@ -35,100 +35,102 @@ if ~isfield(S, 'trials'),        S.trials=0; end
 if ~isfield(S, 'wind'),          S.wind=@hanning; end
 
 
-
 %-channel Selection
 %--------------------------------------------------------------------------
- 
-    labs = S.channels;
-    regex = {};
-    
-    for i = 1:length(labs)
-        if isa(labs,'cell')
+
+labs = S.channels;
+regex = {};
+for i = 1:length(labs)
+    if isa(labs,'cell')
         regex{i} = ['regexp_(',labs{i},')'];
-        else
-            regex{i} = ['regexp_(',labs,')'];
-        end
+    else
+        regex{i} = ['regexp_(',labs,')'];
     end
-    chans = [S.D.selectchannels(regex), indchantype(S.D,labs)];
-%-epoch dataset
-%--------------------------------------------------------------------------
-if size(S.D,3)>1
-    eD=S.D;
-else
-    nsamps = S.triallength/1000*S.D.fsample;
-    beg = 1:nsamps:size(S.D,2);
-    endsamp =  beg+(nsamps-1);
-    inRange = ~(beg>size(S.D,2)|endsamp>size(S.D,2));
-    eD = zeros(length(chans),nsamps,sum(inRange));
-    for i =1:length(inRange)
-        if(inRange(i))
-            eD(:,:,i)=S.D(chans,beg(i):endsamp(i),:);
-        end
-    end
-    
 end
+chans = [S.D.selectchannels(regex), indchantype(S.D,labs)];
+
 %- set window
 %--------------------------------------------------------------------------
 fs = S.D.fsample();
-N =size(eD,2);
-Nf= ceil((N+1)/2);
-nepochs=size(eD,3);
-pow = zeros(Nf,size(eD,1),nepochs);
-wind  = window(S.wind,size(eD,2));
-coFac= max(wind)/mean(wind);
-wind = repmat(wind,1,size(eD,1));
 
-%coFac = 1;
+if (size(S.D,3)>1)
+    N=size(S.D,2);
+    nepochs = size(S.D,3);
+else
+    N = round(S.triallength/1000*S.D.fsample);
+    begs = 1:N:size(S.D,2);
+    ends= begs+N-1;
+    
+    if(ends(end)>size(S.D,2))
+        ends(end)=[];
+        begs(end)=[];
+    end
+    nepochs=length(begs);
+end
+
+wind  = window(S.wind,N);
+Nf= ceil((N+1)/2);
+coFac= max(wind)/mean(wind);
+wind = repmat(wind,1,length(chans));
+
 %- create PSD
 %--------------------------------------------------------------------------
+freq = 0:fs/N:fs/2;
+odd=mod(N,2)==1;
+psdx= zeros(length(freq),length(chans));
 
 for j = 1:nepochs
-    Btemp=eD(:,:,j)';
-     Btemp = Btemp.*wind*coFac;
     
-    mu=median(Btemp);
-    zf = bsxfun(@minus,Btemp,mu);
+    % if data is already epoched then extract epochs
+    if (size(S.D,3)>1)
+        Btemp=S.D(chans,:,j)';
+    else % otherwise use triallength
+        inds = begs(j):ends(j);
+        Btemp=S.D(chans,inds,1)';
+    end
+    
+    % window data and correct for amplitude loss;
+    Btemp = Btemp.*wind*coFac;
+    
+    % baseline correct if required 
     if(S.bc)
+        mu=median(Btemp);
+        zf = bsxfun(@minus,Btemp,mu);
         fzf = zf;
     else
         fzf=Btemp;
     end
     
-    N= length(fzf);
+    % fourier transform data and get RMS
     xdft = fft(fzf);
-    xdft=xdft(1:floor(N/2+1),:);
-    psdx = abs(xdft)./sqrt(N*fs);
-    freq = 0:fs/size(fzf,1):fs/2;
-    odd=mod(size(fzf,1),2)==1;
+    xdft = xdft(1:floor(N/2+1),:);
+    tmppsd = abs(xdft)./sqrt(N*fs);
+    
+    
     if(odd)
-        %psdx(2:end) = sqrt(2)*psdx(2:end);
-        psdx(2:end) = psdx(2:end);
+        tmppsd(2:end) = tmppsd(2:end);
     else
-        %psdx(2:end-1) = sqrt(2)*psdx(2:end-1);
-        psdx(2:end-1) = psdx(2:end-1);
+        tmppsd(2:end-1) = tmppsd(2:end-1);
     end
-    pow(:,:,j) =psdx;
+    
+    % accumulate avearge PSD to limit memory usage
+    psdx=psdx + tmppsd/nepochs;
 end
 
 %- plot
 %--------------------------------------------------------------------------
-if(S.trials)
-po = pow;
-else
-po = mean(pow(:,:,:),3);
-end
 
-pow = mean(pow(:,:,:),3);
+po = psdx;
 
 if(S.plot)
     figure()
-    semilogy(freq,pow,'LineWidth',2);
+    semilogy(freq,po,'LineWidth',2);
     hold on
     xp2 =0:round(freq(end));
     yp2=ones(1,round(freq(end))+1)*S.constant;
     p2 =plot(xp2,yp2,'--k');
     p2.LineWidth=2;
-    p3=semilogy(freq,median(pow'),'LineWidth',2);
+    p3=semilogy(freq,median(po'),'LineWidth',2);
     p3.Color='k';
     xlabel('Frequency (Hz)')
     labY = ['$$PSD (' S.units ' \sqrt[-1]{Hz}$$)'];
@@ -139,7 +141,7 @@ if(S.plot)
     ax.TickLength = [0.02 0.02];
     fig= gcf;
     fig.Color=[1,1,1];
-
+    
 end
 
 end
