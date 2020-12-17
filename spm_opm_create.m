@@ -181,7 +181,7 @@ D.save();
 D= blank(D,[dataFile,'.dat']);
 if binData
      
-    maxMem= 512e6;
+    maxMem= 100e6;
     samplesPerChunk= round(maxMem/(8*nChans));
     begs= 1:samplesPerChunk:nSamples;
     ends= begs+samplesPerChunk-1;
