@@ -21,14 +21,11 @@ function [shield,f] = spm_opm_rpsd(S)
 
 %-ArgCheck
 %--------------------------------------------------------------------------
-
-if ~isfield(S, 'units'),         S.units = 'fT'; end
 if ~isfield(S, 'triallength'),   S.triallength = 1000; end
-if ~isfield(S, 'constant'),      S.constant = 15; end
 if ~isfield(S, 'bc'),            S.bc = 0; end
 if ~isfield(S, 'channels'),      S.channels = 'ALL'; end
 if ~isfield(S, 'plot'),          S.plot = 0; end
-if ~isfield(S, 'dB'),            S.dB = 0; end
+if ~isfield(S, 'dB'),            S.dB = 1; end
 if ~isfield(S, 'D1'),            error('D1 is required'); end
 if ~isfield(S, 'D2'),            error('D2 is required'); end
 
@@ -39,14 +36,17 @@ if (~fsEqual),error('Sample rates should be identical');end
 
 %-First PSD
 %--------------------------------------------------------------------------
+fprintf('%-40s: %30s\n','Processing First PSD ',spm('time'));
+
 args=[];
 args.D = S.D1;
 args.triallength=S.triallength;
 args.bc=S.bc;
 args.channels=S.channels;
-args.plot=S.plot;
-args.trials=1;
 [p1,~]=spm_opm_psd(args);
+
+
+fprintf('%-40s: %30s\n','Processing Second PSD ',spm('time'));
 
 %- Second PSD
 %--------------------------------------------------------------------------
@@ -55,26 +55,16 @@ args.D = S.D2;
 args.triallength=S.triallength;
 args.bc=S.bc;
 args.channels=S.channels;
-args.plot=S.plot;
-args.trials=1;
 [p2,f]=spm_opm_psd(args);
-
-%- Get same number of trials for each PSD
-%--------------------------------------------------------------------------
-ntrials = min([size(p1,3),size(p2,3)]);
-p1 = p1(:,:,1:ntrials);
-p2 = p2(:,:,1:ntrials);
-p1 = median(p1,3);
-p2 = median(p2,3);
 
 %- Ratio (or difference) of corresponding sensor in each dataset
 %--------------------------------------------------------------------------
-if strcmp(S.channels{1},'ALL')
+if strcmp(S.channels,'ALL')
 chan1 = chanlabels(S.D1);
 chan2 = chanlabels(S.D2);
 else
    chan1 = S.channels;
-chan2 = S.channels; 
+   chan2 = S.channels; 
 end
 inCommon=zeros(size(p1));
 keep = zeros(size(p1,2),1);
