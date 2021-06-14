@@ -1,4 +1,4 @@
-function [po,freq] = spm_opm_psd2(S)
+function [po,freq] = spm_opm_psd(S)
 % Compute PSD for OPM data(for checking noise floor)
 % FORMAT D = spm_opm_psd(S)
 %   S               - input structure

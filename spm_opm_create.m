@@ -115,8 +115,10 @@ catch
         positions =1;
     catch
         try % to assign a BIDS struct of positions
-            if (ismatrix(S.positions))
-                
+            if (isnumeric(S.positions))
+                positions=1;
+            else 
+                positions =0;
             end
         catch
             warning('No position information found')
