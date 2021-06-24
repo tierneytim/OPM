@@ -131,11 +131,19 @@ end
 %----------------------------------------------------------------------
 subjectSource = positions & isfield(S,'sMRI');
 if subjectSource
-    forward =1;
-    template =0;
+    if ~S.sMRI == 1
+        forward         = 1;
+        template        = 0;
+        no_structural   = 0;
+    else
+        subjectSource   = 0;
+        forward         = 1;
+        no_structural   = 1;
+        template        = 1;
+    end
 else
-    forward =0;
-    template =0;
+    forward             = 0;
+    template            = 0;
 end
 
 %- work out data size
@@ -317,7 +325,32 @@ if subjectSource
     end
 end
 
-if(template) %make
+if no_structural
+    try
+        coord = spm_load(S.coordsystem);
+    catch
+        coord = spm_load(coordFile);
+    end
+    
+    % These HeadCoilCoordinates (nas,lpa,rpa) are same space as
+    % sensors positions and specified in the coordsystem.json file
+    fiMat(1,:) = coord.HeadCoilCoordinates.coil1;
+    fiMat(2,:) = coord.HeadCoilCoordinates.coil2;
+    fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
+    
+    fid.fid.label = {'nas', 'lpa', 'rpa'}';
+    fid.fid.pnt =fiMat;
+    fid.pos= []; % headshape field that is left blank, 
+                 % but could be supplemented with headshape info in future?
+    
+    % Use SPM Template brain template
+    M.fid.label = {'nas', 'lpa', 'rpa'}';
+    M.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
+    M.fid.pos= []; % headshape field that is left blank (GRB)
+    M.pnt = D.inv{1}.mesh.fid.pnt;
+end
+
+if(template && ~no_structural) %make
     fid.fid.label = {'nas', 'lpa', 'rpa'}';
     fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
     fid.pos= []; % headshape field that is left blank (GRB)
