@@ -40,6 +40,16 @@ S.data = 'meg.bin';
 S.sMRI='T1w.nii';
 D = spm_opm_create(S);
 
+%% Source example with no structural MRI, but 3 fiducials specified in coordsystem.json
+S               = [];
+S.data          = 'meg.bin';
+S.coordystem    = 'coordsystem.json';
+S.positions     = 'positions.tsv';
+S.channels      = 'channels.tsv';
+S.template      = 1;
+S.meshres       = 3;
+D               = spm_opm_create(S);
+
 %% Simulation Example - default
 S =[];
 D = spm_opm_create(S);
