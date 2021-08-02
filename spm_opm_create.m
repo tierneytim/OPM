@@ -13,6 +13,7 @@ function [D,L] = spm_opm_create(S)
 %   S.coordsystem   - coordsystem.json file                    - Default: transform between sensor space and anatomy is identity
 %   S.positions     - positions.tsv file                       - Default: no Default
 %   S.sMRI          - Filepath to  MRI file                    - Default: no Default
+%   S.template      - Use SPM canonical template               - Default: 0
 %   S.cortex        - Custom cortical mesh                     - Default: Use inverse normalised cortical mesh
 %   S.scalp         - Custom scalp mesh                        - Default: Use inverse normalised scalp mesh
 %   S.oskull        - Custom outer skull mesh                  - Default: Use inverse normalised outer skull mesh
@@ -35,6 +36,7 @@ spm('FnBanner', mfilename);
 if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell'; end
 if ~isfield(S, 'meshres'),     S.meshres = 1; end
 if ~isfield(S, 'scalp'),       S.scalp = []; end
+if ~isfield(S, 'template'),    S.template = 0; end
 if ~isfield(S, 'cortex'),      S.cortex = []; end
 if ~isfield(S, 'iskull'),      S.iskull = []; end
 if ~isfield(S, 'oskull'),      S.oskull = []; end
@@ -129,13 +131,21 @@ end
 
 %- Forward model Check
 %----------------------------------------------------------------------
-subjectSource = positions & isfield(S,'sMRI');
+subjectSource   = positions & isfield(S,'sMRI');
+subjectNoStruct = positions & S.template == 1;
+
 if subjectSource
-    forward =1;
-    template =0;
+    if ~S.sMRI == 1
+        forward         = 1;
+        template        = 0;
+    end
+elseif subjectNoStruct
+    forward         = 1;
+    template        = 1;
+    S.sMRI          = 1;
 else
-    forward =0;
-    template =0;
+    forward             = 0;
+    template            = 0;
 end
 
 %- work out data size
@@ -317,7 +327,40 @@ if subjectSource
     end
 end
 
-if(template) %make
+% If user wants to use the template brain, try to load fiducials from 
+% coordsystem.json
+if subjectNoStruct
+    try
+        try
+            coord = spm_load(S.coordsystem);
+        catch
+            coord = spm_load(coordFile);
+        end
+        
+        % These HeadCoilCoordinates (nas,lpa,rpa) are same space as
+        % sensors positions and specified in the coordsystem.json file
+        fiMat(1,:) = coord.HeadCoilCoordinates.coil1;
+        fiMat(2,:) = coord.HeadCoilCoordinates.coil2;
+        fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
+        
+        fid.fid.label = {'nas', 'lpa', 'rpa'}';
+        fid.fid.pnt =fiMat;
+        fid.pos= []; % headshape field that is left blank,
+        % but could be supplemented with headshape info in future?
+        
+        % Use SPM Template brain template
+        M.fid.label = {'nas', 'lpa', 'rpa'}';
+        M.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
+        M.fid.pos= []; % headshape field that is left blank (GRB)
+        M.pnt = D.inv{1}.mesh.fid.pnt;
+    catch
+        subjectNoStruct = 0;
+        warning(['Could not load coordinate system - assuming sensor ',...
+            'positions are in the same coordinate as SPM canonical brain']);
+    end
+end
+
+if(template && ~subjectNoStruct) %make
     fid.fid.label = {'nas', 'lpa', 'rpa'}';
     fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
     fid.pos= []; % headshape field that is left blank (GRB)
