@@ -25,7 +25,7 @@ function [D,L] = spm_opm_create(S)
 %  D           - MEEG object (also written to disk)
 %  L           - Lead field (also written on disk)
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2021 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
 % $Id: spm_opm_create.m 7778 2020-02-05 13:52:28Z tim $
@@ -33,16 +33,17 @@ spm('FnBanner', mfilename);
 
 %-Set default values
 %--------------------------------------------------------------------------
-if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell'; end
-if ~isfield(S, 'meshres'),     S.meshres = 1; end
-if ~isfield(S, 'scalp'),       S.scalp = []; end
-if ~isfield(S, 'template'),    S.template = 0; end
-if ~isfield(S, 'cortex'),      S.cortex = []; end
-if ~isfield(S, 'iskull'),      S.iskull = []; end
-if ~isfield(S, 'oskull'),      S.oskull = []; end
-if ~isfield(S, 'fname'),       S.fname = 'sim_opm'; end
-if ~isfield(S, 'precision'),   S.precision = 'single'; end
-if ~isfield(S, 'lead'),        S.lead = 0; end
+if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell';  end
+if ~isfield(S, 'meshres'),     S.meshres = 1;               end
+if ~isfield(S, 'scalp'),       S.scalp = [];                end
+if ~isfield(S, 'template'),    S.template = 0;              end
+if ~isfield(S, 'cortex'),      S.cortex = [];               end
+if ~isfield(S, 'iskull'),      S.iskull = [];               end
+if ~isfield(S, 'oskull'),      S.oskull = [];               end
+if ~isfield(S, 'fname'),       S.fname = 'sim_opm';         end
+if ~isfield(S, 'precision'),   S.precision = 'single';      end
+if ~isfield(S, 'lead'),        S.lead = 0;                  end
+if ~isfield(S, 'headshape');   S.headshape = [];            end
 
 
 %- identify Binary File
@@ -119,7 +120,7 @@ catch
         try % to assign a BIDS struct of positions
             if (isnumeric(S.positions))
                 positions=1;
-            else 
+            else
                 positions =0;
             end
         catch
@@ -135,9 +136,13 @@ subjectSource   = positions & isfield(S,'sMRI');
 subjectNoStruct = positions & S.template == 1;
 
 if subjectSource
-    if ~S.sMRI == 1
-        forward         = 1;
-        template        = 0;
+    switch class(S.sMRI)
+        case 'char'
+            forward = 1;
+            template = 0;
+        case 'double'
+            forward         = 1;
+            template        = S.sMRI==1;
     end
 elseif subjectNoStruct
     forward         = 1;
@@ -165,7 +170,7 @@ else
     nSamples=size(S.data,2);
     nTrials=size(S.data,3);
 end
-%- Create SPM object 
+%- Create SPM object
 %--------------------------------------------------------------------------
 
 D = meeg(nChans,nSamples,nTrials);
@@ -192,7 +197,7 @@ D.save();
 %--------------------------------------------------------------------------
 D= blank(D,[dataFile,'.dat']);
 if binData
-     
+    
     maxMem= 100e6;
     samplesPerChunk= round(maxMem/(8*nChans));
     begs= 1:samplesPerChunk:nSamples;
@@ -327,7 +332,7 @@ if subjectSource
     end
 end
 
-% If user wants to use the template brain, try to load fiducials from 
+% If user wants to use the template brain, try to load fiducials from
 % coordsystem.json
 if subjectNoStruct
     try
@@ -344,14 +349,17 @@ if subjectNoStruct
         fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
         
         fid.fid.label = {'nas', 'lpa', 'rpa'}';
-        fid.fid.pnt =fiMat;
-        fid.pos= []; % headshape field that is left blank,
-        % but could be supplemented with headshape info in future?
+        fid.fid.pnt = fiMat;
+        if ~isempty(S.headshape)
+            fid.pnt = S.headshape;
+        else
+            fid.pnt = []; % headshape field that is left blank,
+        end
         
         % Use SPM Template brain template
         M.fid.label = {'nas', 'lpa', 'rpa'}';
         M.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
-        M.fid.pos= []; % headshape field that is left blank (GRB)
+        M.fid.pos = []; % headshape field that is left blank (GRB)
         M.pnt = D.inv{1}.mesh.fid.pnt;
     catch
         subjectNoStruct = 0;
@@ -375,8 +383,12 @@ if(forward)
         D = fiducials(D, fid);
         save(D);
         f=fiducials(D);
-        f.pnt =zeros(0,3);
-        D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+        if ~isempty(f.pnt)
+            D = spm_eeg_inv_datareg_ui(D,1,f,M,1);
+        else
+            f.pnt = zeros(0,3);
+            D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+        end
     end
 end
 %- Foward  model specification
