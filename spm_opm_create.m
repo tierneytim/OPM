@@ -135,9 +135,13 @@ subjectSource   = positions & isfield(S,'sMRI');
 subjectNoStruct = positions & S.template == 1;
 
 if subjectSource
-    if ~S.sMRI == 1
-        forward         = 1;
-        template        = 0;
+    switch class(S.sMRI)
+        case 'char'
+            forward = 1;
+            template = 0;
+        case 'double'
+            forward         = 1;
+            template        = S.sMRI==1;
     end
 elseif subjectNoStruct
     forward         = 1;
