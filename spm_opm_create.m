@@ -14,6 +14,7 @@ function [D,L] = spm_opm_create(S)
 %   S.positions     - positions.tsv file                       - Default: no Default
 %   S.sMRI          - Filepath to  MRI file                    - Default: no Default
 %   S.template      - Use SPM canonical template               - Default: 0
+%   S.headhape      - .pos file for better template fit        - Default:
 %   S.cortex        - Custom cortical mesh                     - Default: Use inverse normalised cortical mesh
 %   S.scalp         - Custom scalp mesh                        - Default: Use inverse normalised scalp mesh
 %   S.oskull        - Custom outer skull mesh                  - Default: Use inverse normalised outer skull mesh
@@ -336,24 +337,43 @@ end
 % coordsystem.json
 if subjectNoStruct
     try
-        try
-            coord = spm_load(S.coordsystem);
-        catch
-            coord = spm_load(coordFile);
-        end
         
-        % These HeadCoilCoordinates (nas,lpa,rpa) are same space as
-        % sensors positions and specified in the coordsystem.json file
-        fiMat(1,:) = coord.HeadCoilCoordinates.coil1;
-        fiMat(2,:) = coord.HeadCoilCoordinates.coil2;
-        fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
-        
-        fid.fid.label = {'nas', 'lpa', 'rpa'}';
-        fid.fid.pnt = fiMat;
+        % check if there is a headshape file and load data/fids from there
+        % otherwise fallback on coordsystem.json
         if ~isempty(S.headshape)
-            fid.pnt = S.headshape;
-        else
+            % SPMs native support for polhemus files was ditched a long
+            % time ago, so using fieldTrip as a backend.
+            shape = ft_read_headshape(S.headshape);
+            fid.pnt = shape.pos;
+            
+            % headshape mush be in the same space as sensors!
+            % get the order into nas, lpa, rpa
+            targetOrder = {'nas','lpa','rpa'};
+            for ii = 1:3
+                fidOrder(ii) = find(ismember(lower(shape.fid.label),targetOrder{ii}));
+            end
+            fid.fid.label = targetOrder;
+            fid.fid.pnt = shape.fid.pos(fidOrder,:);
+            
+        else % coordsys.json fallback
+            
+            try
+                coord = spm_load(S.coordsystem);
+            catch
+                coord = spm_load(coordFile);
+            end
+            
+            % These HeadCoilCoordinates (nas,lpa,rpa) are same space as
+            % sensors positions and specified in the coordsystem.json file
+            fiMat(1,:) = coord.HeadCoilCoordinates.coil1;
+            fiMat(2,:) = coord.HeadCoilCoordinates.coil2;
+            fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
+            
+            fid.fid.label = {'nas', 'lpa', 'rpa'}';
+            fid.fid.pnt = fiMat;
+            
             fid.pnt = []; % headshape field that is left blank,
+            
         end
         
         % Use SPM Template brain template
