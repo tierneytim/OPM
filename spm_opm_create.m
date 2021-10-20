@@ -199,7 +199,7 @@ D = chantype(D,1:size(D,1),channels.type);
 ma = fullfile(direc,[dataFile,'.mat']);
 da = fullfile(direc,[dataFile,'.dat']);
 
-ae = exist(fname(D),'file')==2;
+ae = exist(fullfile(path(D),fname(D)),'file')==2;
 if(ae)
     delete(ma);
     delete(da);
