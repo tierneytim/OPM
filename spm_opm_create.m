@@ -42,6 +42,7 @@ if ~isfield(S, 'cortex'),      S.cortex = [];               end
 if ~isfield(S, 'iskull'),      S.iskull = [];               end
 if ~isfield(S, 'oskull'),      S.oskull = [];               end
 if ~isfield(S, 'fname'),       S.fname = 'sim_opm';         end
+if ~isfield(S, 'path'),        S.path = [];                 end
 if ~isfield(S, 'precision'),   S.precision = 'single';      end
 if ~isfield(S, 'lead'),        S.lead = 0;                  end
 if ~isfield(S, 'headshape');   S.headshape = [];            end
@@ -171,6 +172,17 @@ else
     nSamples=size(S.data,2);
     nTrials=size(S.data,3);
 end
+
+%- Check for a custom save path
+%--------------------------------------------------------------------------
+if ~isempty(S.path)
+    if exist(S.path,'dir')
+        direc = S.path;
+    else
+        error('specified output directory does not exist!')
+    end
+end % will use original direc variable otherwise
+
 %- Create SPM object
 %--------------------------------------------------------------------------
 
