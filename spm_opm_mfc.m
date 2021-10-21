@@ -28,9 +28,9 @@ if ~isfield(S, 'balance'),       S.balance = 0; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
-try
-    s= sensors(S.D,'MEG'); 
-catch
+
+s = sensors(S.D,'MEG');
+if isempty(s)==1;
     error('Could not find sensor positions')
 end
 
