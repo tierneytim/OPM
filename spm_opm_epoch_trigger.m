@@ -46,8 +46,12 @@ nevents=[];
 for i=1:nTrigs
     
     tChan=trigs(i,:);                                  % Get ith trigger
-    thresh=std(tChan)*2;                               % Threshold it
-    
+
+if(~isfield(S, 'thresh'))
+    thresh=std(tChan)*2;
+else
+    thresh = S.thresh;% Threshold it
+end
     evSamples=find(diff(tChan>thresh)==1)+1;           % Find 1st sample exceeding threshold
     offsetTime=S.timewin(i,1)/1000;                    % Offset in seconds
     offsetSamples=round(offsetTime.*S.D.fsample);      % Offset in samples
@@ -77,3 +81,7 @@ args.conditionlabels =cond;
 args.bc = 0;
 args.prefix = 'e_';
 D = spm_eeg_epochs(args);
+
+
+end
+
