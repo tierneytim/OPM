@@ -1,73 +1,68 @@
-function [mfD,Yinds] = spm_opm_mfc(S)
-% remove interference that behaves as if it was from a mean (magnetic) field
-% FORMAT D = spm_opm_mfc(S)
+function [SSPD,Yinds] = spm_opm_SSP(S)
+% Estimates 3 eigenmodes from training data and then removes from test data(SSP)
+% FORMAT D = spm_opm_SSP(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                                - Default: no Default
-%   S.usebadchans   - logical to correct channels marked as bad      - Default: 0
+%   S.train         - SPM MEEG training  object                      - Default: uses first T seconds of test data for training
+%   S.T             - number of seconds to compute eigenmodes from   - Defualt: 5
 %   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
-%   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
-%   S.balance       - logical to update forward model                - Default 0
 % Output:
-%   D               - denoised MEEG object (also written to disk)
+%   SSPD            - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
 %__________________________________________________________________________
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+%
+% The code here implements a very basic Signal Space Projection. No forward
+% model corrections are currently made and therefore this function should 
+% not to be used for general denoising of  brain data. Function is useful
+% for quickly assessing white nose floor of OPM arrays when sensor orientations 
+% are not available and spm_opm_mfc cannot be used. In all other cases 
+% spm_opm_mfc shuold be  used 
 
 % Tim Tierney
-% $Id: spm_opm_mfc.m 7646 2019-07-25 13:58:46Z tim $
+% $Id: spm_opm_SSP.m 7646 2019-07-25 13:58:46Z tim $
 
 %-Set default values
 %--------------------------------------------------------------------------
 errorMsg = 'an MEEG object must be supplied.';
 if ~isfield(S, 'D'),             error(errorMsg); end
-if ~isfield(S, 'usebadchans'),   S.usebadchans = 0; end
+if ~isfield(S, 'train'),         S.train=S.D; end
 if ~isfield(S, 'chunkSize'),     S.chunkSize = 512; end
-if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
 if ~isfield(S, 'balance'),       S.balance = 0; end
+if ~isfield(S, 'usebadchans'),   S.usebadchans = 0; end
+if ~isfield(S, 'T'),             S.T = 5; end
+if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
-
-s = sensors(S.D,'MEG');
-if isempty(s)==1;
-    error('Could not find sensor positions')
-end
-
+n=3;
+Yinds = indchantype(S.train,'MEGMAG')';
+bcInds = badchannels(S.D);
 if(S.usebadchans)
-    usedLabs= s.label;
-    sinds = 1:length(usedLabs);
+    Yinds = Yinds;    
 else
-    badLabels = chanlabels(S.D,badchannels(S.D));
-    indsRem = [];
-    for i =1:length(badLabels)
-        indsRem=[indsRem strmatch(badLabels{i},s.label)];
-    end
-    LabInds = 1:length(s.label);
-    sinds = setdiff(LabInds,indsRem);
-    usedLabs= s.label(sinds);
+    Yinds = setdiff(Yinds,bcInds);
 end
-X= s.coilori(sinds,:);
+usedLabs = chanlabels(S.train,Yinds);
+testY=S.D(Yinds,find(S.train.time()<S.T),:);
+G= testY*testY';
+[U,~,~]= svd(G);
+X=U(:,1:n);
 fprintf('%-40s: %30s\n','Created Design Matrix',spm('time'));
 
 %-Compute projector
 %--------------------------------------------------------------------------
-M = eye(size(X,1))-X*pinv(X);
+M = eye(size(X,1))-X*X';
 
-%-Get Data indices
-%--------------------------------------------------------------------------
-Yinds = indchannel(S.D,usedLabs);
-
-if (size(Yinds,1)~=size(X,1))
-    error('data size ~= number of sensors with orientation information');
-else
-    
 %-create ouput dataset object
 %--------------------------------------------------------------------------
-fprintf('Creating output dataset\n'); 
-outname = fullfile(path(S.D),['MF_' fname(S.D)]);
-mfD = clone(S.D,outname);
-mfD.save();
+fprintf('Creating output dataset\n');
+outname = fullfile(path(S.D),['SSP_' fname(S.D)]);
+
+
+SSPD = clone(S.D,outname);
+SSPD.save();
 
 %- Work out chunk size
 %--------------------------------------------------------------------------
@@ -77,6 +72,7 @@ ends = (begs+chunkSamples-1);
 if(ends(end)>size(S.D,2))
     ends(end)= size(S.D,2);
 end
+    
 
 %-Run on channels needing correction
 %--------------------------------------------------------------------------
@@ -95,7 +91,7 @@ for j=1:size(S.D,3)
         out = S.D(:,inds,j);
         Y=out(Yinds,:);
         out(Yinds,:)=M*Y;
-        mfD(:,inds,j)=out;
+        SSPD(:,inds,j)=out;
         
         % accurate running variance for identifying odd channels
         % (https://www.johndcook.com/blog/standard_deviation/)
@@ -110,40 +106,10 @@ for j=1:size(S.D,3)
     end
     trvar(:,j)=sk/(count-1);
 end
+SSPD.save();
 
-%-Update forward modelling information
-%--------------------------------------------------------------------------
-if (S.balance)
-    fprintf('%-40s: %30s\n','Updating Sensor Information',spm('time'));
-    grad = mfD.sensors('MEG');
-    tmpTra= eye(size(grad.coilori,1));
-    tmpTra(sinds,sinds)=M;
-    grad.tra                = tmpTra*grad.tra;
-    grad.balance.previous   = grad.balance.current;
-    grad.balance.current    = 'mfc';
-    mfD = sensors(mfD,'MEG',grad);
-    % Check if any information in D.inv needs updating.
-    % TODO: Update to support multiple invs/forwards/modalities
-    if isfield(mfD,'inv')
-        if isfield(mfD.inv{1},'gainmat')
-            fprintf(['Clearing current forward model, please recalculate '...
-                'with spm_eeg_lgainmat\n']);
-            mfD.inv{1} = rmfield(mfD.inv{1},'gainmat');
-        end
-        if isfield(mfD.inv{1},'datareg')
-            mfD.inv{1}.datareg.sensors = grad;
-        end
-        if isfield(mfD.inv{1},'forward')
-            voltype = mfD.inv{1}.forward.voltype;
-            mfD.inv{1}.forward = [];
-            mfD.inv{1}.forward.voltype = voltype;
-            mfD = spm_eeg_inv_forward(mfD,1);
-        end
-    end
-    mfD.save();
-end
 
-%-Odd Channel Check
+%-Bad Channel Check
 %--------------------------------------------------------------------------
 fprintf('Checking for unusual channels\n');
 SD = mean(sqrt(trvar),2)*1e-3;

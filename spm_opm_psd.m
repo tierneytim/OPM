@@ -1,4 +1,4 @@
-function [po,freq] = spm_opm_psd2(S)
+function [po,freq] = spm_opm_psd(S)
 % Compute PSD for OPM data(for checking noise floor)
 % FORMAT D = spm_opm_psd(S)
 %   S               - input structure
@@ -123,14 +123,14 @@ end
 po = psdx;
 
 if(S.plot)
-    figure()
+    f= figure();
     semilogy(freq,po,'LineWidth',2);
     hold on
     xp2 =0:round(freq(end));
     yp2=ones(1,round(freq(end))+1)*S.constant;
     p2 =plot(xp2,yp2,'--k');
     p2.LineWidth=2;
-    p3=semilogy(freq,median(po'),'LineWidth',2);
+    p3=semilogy(freq,median(po,2),'LineWidth',2);
     p3.Color='k';
     xlabel('Frequency (Hz)')
     labY = ['$$PSD (' S.units ' \sqrt[-1]{Hz}$$)'];
@@ -141,7 +141,6 @@ if(S.plot)
     ax.TickLength = [0.02 0.02];
     fig= gcf;
     fig.Color=[1,1,1];
-    
 end
 
 end

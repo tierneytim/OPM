@@ -13,6 +13,8 @@ function [D,L] = spm_opm_create(S)
 %   S.coordsystem   - coordsystem.json file                    - Default: transform between sensor space and anatomy is identity
 %   S.positions     - positions.tsv file                       - Default: no Default
 %   S.sMRI          - Filepath to  MRI file                    - Default: no Default
+%   S.template      - Use SPM canonical template               - Default: 0
+%   S.headhape      - .pos file for better template fit        - Default:
 %   S.cortex        - Custom cortical mesh                     - Default: Use inverse normalised cortical mesh
 %   S.scalp         - Custom scalp mesh                        - Default: Use inverse normalised scalp mesh
 %   S.oskull        - Custom outer skull mesh                  - Default: Use inverse normalised outer skull mesh
@@ -24,7 +26,7 @@ function [D,L] = spm_opm_create(S)
 %  D           - MEEG object (also written to disk)
 %  L           - Lead field (also written on disk)
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2021 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
 % $Id: spm_opm_create.m 7778 2020-02-05 13:52:28Z tim $
@@ -32,15 +34,18 @@ spm('FnBanner', mfilename);
 
 %-Set default values
 %--------------------------------------------------------------------------
-if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell'; end
-if ~isfield(S, 'meshres'),     S.meshres = 1; end
-if ~isfield(S, 'scalp'),       S.scalp = []; end
-if ~isfield(S, 'cortex'),      S.cortex = []; end
-if ~isfield(S, 'iskull'),      S.iskull = []; end
-if ~isfield(S, 'oskull'),      S.oskull = []; end
-if ~isfield(S, 'fname'),       S.fname = 'sim_opm'; end
-if ~isfield(S, 'precision'),   S.precision = 'single'; end
-if ~isfield(S, 'lead'),        S.lead = 0; end
+if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell';  end
+if ~isfield(S, 'meshres'),     S.meshres = 1;               end
+if ~isfield(S, 'scalp'),       S.scalp = [];                end
+if ~isfield(S, 'template'),    S.template = 0;              end
+if ~isfield(S, 'cortex'),      S.cortex = [];               end
+if ~isfield(S, 'iskull'),      S.iskull = [];               end
+if ~isfield(S, 'oskull'),      S.oskull = [];               end
+if ~isfield(S, 'fname'),       S.fname = 'sim_opm';         end
+if ~isfield(S, 'path'),        S.path = [];                 end
+if ~isfield(S, 'precision'),   S.precision = 'single';      end
+if ~isfield(S, 'lead'),        S.lead = 0;                  end
+if ~isfield(S, 'headshape');   S.headshape = [];            end
 
 
 %- identify Binary File
@@ -115,8 +120,10 @@ catch
         positions =1;
     catch
         try % to assign a BIDS struct of positions
-            if (ismatrix(S.positions))
-                
+            if (isnumeric(S.positions))
+                positions=1;
+            else
+                positions =0;
             end
         catch
             warning('No position information found')
@@ -127,13 +134,25 @@ end
 
 %- Forward model Check
 %----------------------------------------------------------------------
-subjectSource = positions & isfield(S,'sMRI');
+subjectSource   = positions & isfield(S,'sMRI');
+subjectNoStruct = positions & S.template == 1;
+
 if subjectSource
-    forward =1;
-    template =0;
+    switch class(S.sMRI)
+        case 'char'
+            forward = 1;
+            template = 0;
+        case 'double'
+            forward         = 1;
+            template        = S.sMRI==1;
+    end
+elseif subjectNoStruct
+    forward         = 1;
+    template        = 1;
+    S.sMRI          = 1;
 else
-    forward =0;
-    template =0;
+    forward             = 0;
+    template            = 0;
 end
 
 %- work out data size
@@ -153,7 +172,18 @@ else
     nSamples=size(S.data,2);
     nTrials=size(S.data,3);
 end
-%- Create SPM object 
+
+%- Check for a custom save path
+%--------------------------------------------------------------------------
+if ~isempty(S.path)
+    if exist(S.path,'dir')
+        direc = S.path;
+    else
+        error('specified output directory does not exist!')
+    end
+end % will use original direc variable otherwise
+
+%- Create SPM object
 %--------------------------------------------------------------------------
 
 D = meeg(nChans,nSamples,nTrials);
@@ -169,7 +199,7 @@ D = chantype(D,1:size(D,1),channels.type);
 ma = fullfile(direc,[dataFile,'.mat']);
 da = fullfile(direc,[dataFile,'.dat']);
 
-ae = exist(fname(D),'file')==2;
+ae = exist(fullfile(path(D),fname(D)),'file')==2;
 if(ae)
     delete(ma);
     delete(da);
@@ -180,7 +210,7 @@ D.save();
 %--------------------------------------------------------------------------
 D= blank(D,[dataFile,'.dat']);
 if binData
-     
+    
     maxMem= 100e6;
     samplesPerChunk= round(maxMem/(8*nChans));
     begs= 1:samplesPerChunk:nSamples;
@@ -315,7 +345,62 @@ if subjectSource
     end
 end
 
-if(template) %make
+% If user wants to use the template brain, try to load fiducials from
+% coordsystem.json
+if subjectNoStruct
+    try
+        
+        % check if there is a headshape file and load data/fids from there
+        % otherwise fallback on coordsystem.json
+        if ~isempty(S.headshape)
+            % SPMs native support for polhemus files was ditched a long
+            % time ago, so using fieldTrip as a backend.
+            shape = ft_read_headshape(S.headshape);
+            fid.pnt = shape.pos;
+            
+            % headshape mush be in the same space as sensors!
+            % get the order into nas, lpa, rpa
+            targetOrder = {'nas','lpa','rpa'};
+            for ii = 1:3
+                fidOrder(ii) = find(ismember(lower(shape.fid.label),targetOrder{ii}));
+            end
+            fid.fid.label = targetOrder;
+            fid.fid.pnt = shape.fid.pos(fidOrder,:);
+            
+        else % coordsys.json fallback
+            
+            try
+                coord = spm_load(S.coordsystem);
+            catch
+                coord = spm_load(coordFile);
+            end
+            
+            % These HeadCoilCoordinates (nas,lpa,rpa) are same space as
+            % sensors positions and specified in the coordsystem.json file
+            fiMat(1,:) = coord.HeadCoilCoordinates.coil1;
+            fiMat(2,:) = coord.HeadCoilCoordinates.coil2;
+            fiMat(3,:) = coord.HeadCoilCoordinates.coil3;
+            
+            fid.fid.label = {'nas', 'lpa', 'rpa'}';
+            fid.fid.pnt = fiMat;
+            
+            fid.pnt = []; % headshape field that is left blank,
+            
+        end
+        
+        % Use SPM Template brain template
+        M.fid.label = {'nas', 'lpa', 'rpa'}';
+        M.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
+        M.fid.pos = []; % headshape field that is left blank (GRB)
+        M.pnt = D.inv{1}.mesh.fid.pnt;
+    catch
+        subjectNoStruct = 0;
+        warning(['Could not load coordinate system - assuming sensor ',...
+            'positions are in the same coordinate as SPM canonical brain']);
+    end
+end
+
+if(template && ~subjectNoStruct) %make
     fid.fid.label = {'nas', 'lpa', 'rpa'}';
     fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
     fid.pos= []; % headshape field that is left blank (GRB)
@@ -330,8 +415,12 @@ if(forward)
         D = fiducials(D, fid);
         save(D);
         f=fiducials(D);
-        f.pnt =zeros(0,3);
-        D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+        if ~isempty(f.pnt)
+            D = spm_eeg_inv_datareg_ui(D,1,f,M,1);
+        else
+            f.pnt = zeros(0,3);
+            D = spm_eeg_inv_datareg_ui(D,1,f,M,0);
+        end
     end
 end
 %- Foward  model specification
