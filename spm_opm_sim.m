@@ -11,6 +11,7 @@ function [D,L] = spm_opm_sim(S)
 %   S.offset        - scalp to sensor distance(mm) - Default: 6.5
 %   S.nSamples      - number of samples            - Default: 1000
 %   S.Dens          - number of density checks     - Default: 40
+%   S.axis          - number of othogonal axes     - Default: 1
 % SOURCE LEVEL INFO
 %   S.positions     - positions.tsv file           - Default:
 %   S.sMRI          - Filepath to  MRI file        - Default: uses template
@@ -48,6 +49,7 @@ if ~isfield(S, 'data'),        S.data = zeros(1,S.nSamples); end
 if ~isfield(S, 'wholehead'),   S.wholehead = 1; end
 if ~isfield(S, 'fname'),       S.fname = 'sim_opm'; end
 if ~isfield(S, 'space'),       S.space = 35; end
+if ~isfield(S, 'axis'),        S.axis = 1; end
 
 
 %- Position File check
@@ -147,6 +149,7 @@ catch % if no postions and orientations provided then create them
     args.space = S.space;
     args.wholehead = S.wholehead;
     args.nDens = S.nDens;
+    args.axis=S.axis;
     [pos,ori] = opm_createSensorArray(args);
 end
 
@@ -306,6 +309,7 @@ function [pos,ori] = opm_createSensorArray(S)
 %   S.space        - distance between sensors(mm)
 %   S.wholehead    - boolean: Should whole scalp surface should be covered?
 %   S.nDens        - number of density optimisations
+%   S.axis         - number of axes (1,2,3)
 % _________________________________________________________________________
 
 % Args
@@ -420,6 +424,28 @@ if(~wholehead)
     pos= pos(C,:);
     ori = ori(C,:);
 end
+
+% add a second axis... I've no idea in what direction
+if(S.axis>1)
+    pos1=pos;
+    pos=[pos1;pos1];
+    dualori = [ori(:,2), -ori(:,1) zeros(size(ori,1),1)];
+    ori1=ori;
+    ori = [ori1; dualori];
+end
+
+% add the third axis
+if(S.axis>2)
+    triori=dualori;
+    for i =1:size(dualori,1)
+        triori(i,:) = cross(dualori(i,:), ori1(i,:));
+    end
+    pos  = [pos1;pos1;pos1];
+    ori = [ori1;dualori;triori];
+    
+end
+
+
 
 end
 
