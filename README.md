@@ -112,8 +112,8 @@ D = spm_opm_create(S);
 A number of preprocessing steps can be optionally applied to OPM data in any order you want(similar to any MEG dataset). Here is an example of some techniques.
 
 <a name="d0"></a>
-### Mean Field Correction
-If the distance between an OPM array and a source of magnetic interference is large relative to the size of the OPM array then the interference will nearly  be constant across space. We can therefore model the interference as a "mean field". This mean field can be modeled and removed by regressing the relative orientations of the OPM array from the data. We provide an example below of how much interference in our magnetically shielded room can be accounted for with such a mean field.
+### Homogenous Field Correction
+If the distance between an OPM array and a source of magnetic interference is large relative to the size of the OPM array then the interference will nearly  be constant across space. We can therefore model the interference as a "homogeneous field". This homogeneous field can be modeled and removed by regressing the relative orientations of the OPM array from the data. We provide an example below of how much interference in our magnetically shielded room can be accounted for with such a homogeneous field.
 
 <p align="center">
 <img src="readme/MF.png"  />
@@ -126,7 +126,7 @@ Much of the low frequency noise is substantially reduced as well as the drift an
 D=spm_eeg_load('/path/to/testData/mf.mat');
 S=[];
 S.D=D;
-[mfD, Yinds]=spm_opm_mfc(S);
+[hfD, Yinds]=spm_opm_hfc(S);
 chans= chanlabels(mfD,Yinds);
 
 S=[];
@@ -140,7 +140,7 @@ xlim([1,100])
 ylim([1,1e4])
 
 S=[];
-S.D=mfD;
+S.D=hfD;
 S.plot=1;
 S.channels=chans;
 S.triallength=2000;
