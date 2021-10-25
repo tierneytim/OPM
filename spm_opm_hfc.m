@@ -1,6 +1,6 @@
-function [mfD,Yinds] = spm_opm_mfc(S)
-% remove interference that behaves as if it was from a mean (magnetic) field
-% FORMAT D = spm_opm_mfc(S)
+function [mfD,Yinds] = spm_opm_hfc(S)
+% remove interference that behaves as if it was from a homogeneous (magnetic) field
+% FORMAT D = spm_opm_hfc(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                                - Default: no Default
@@ -15,7 +15,7 @@ function [mfD,Yinds] = spm_opm_mfc(S)
 % Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_mfc.m 7646 2019-07-25 13:58:46Z tim $
+% $Id: spm_opm_hfc.m 7646 2019-07-25 13:58:46Z tim $
 
 %-Set default values
 %--------------------------------------------------------------------------
