@@ -8,4 +8,5 @@ testScripts/*local.m
 
 *.asv
 !testData/testCustom.gii
+!testData/*.surf.gii
 !testData/T1w.nii
