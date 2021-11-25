@@ -120,7 +120,7 @@ if (S.balance)
     tmpTra(sinds,sinds)=M;
     grad.tra                = tmpTra*grad.tra;
     grad.balance.previous   = grad.balance.current;
-    grad.balance.current    = 'mfc';
+    grad.balance.current    = 'hfc';
     mfD = sensors(mfD,'MEG',grad);
     % Check if any information in D.inv needs updating.
     % TODO: Update to support multiple invs/forwards/modalities

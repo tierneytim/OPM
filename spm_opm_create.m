@@ -258,13 +258,15 @@ if positions
     ori = [posOri.Ox,posOri.Oy,posOri.Oz];
     cl = posOri.name;
     
+    [sel1 sel2] = match_str(cl,channels.name);
+    
     grad= [];
     grad.label = cl;
     grad.coilpos = pos;
     grad.coilori = ori;
     grad.tra = eye(numel(grad.label));
     grad.chanunit = repmat({'T'}, numel(grad.label), 1);
-    grad.chantype= 'MEG';
+    grad.chantype = lower({channels.type{sel2}}');
     grad = ft_datatype_sens(grad, 'amplitude', 'T', 'distance', 'mm');
     D = sensors(D, 'MEG', grad);
     save(D);
