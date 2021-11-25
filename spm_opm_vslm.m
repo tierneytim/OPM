@@ -148,8 +148,8 @@ end
 count=1;
 for l=1:S.li
     for m=-l:l
-        %a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
-        a=1;
+        a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
+        %a=1;
         u = m*atan2(y,x);
         um =abs(m)*atan2(y,x);
         
