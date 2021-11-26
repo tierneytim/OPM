@@ -87,7 +87,7 @@ end
 
 n=S.li^2+2*S.li;
 r = sqrt(x.^2+y.^2+z.^2);
-
+rbar = mean(r);
 Slm = slm(v,S.li);
 Slmdx=zeros(size(x,1),n);
 Slmdy=zeros(size(x,1),n);
@@ -125,14 +125,16 @@ for l=1:S.li
         end
         if(reg)
             Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
-            if(S.scale)
-            Slmdz(:,count) = t1+l*z.*Slm(:,count).*r.^(-2);
-            end
+               if(S.scale)
+                  Slmdz(:,count) = t1+l*z.*Slm(:,count).*r.^(-2) ;
+                  Slmdz(:,count) = Slmdz(:,count).*exp(l*log(r/rbar));
+                end
         else
             Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
-            if(S.scale)
-            Slmdz(:,count) = t1./r -(l+1)*z.*Slm(:,count)./(r.^3);
-            end
+             if(S.scale)
+                  Slmdz(:,count) = t1./(r.^(1))-(l+1)*z.*Slm(:,count)./(r.^(3));
+                  Slmdz(:,count) = Slmdz(:,count).*exp(l*log(rbar./r));
+                end
         end
         divzero = isnan(Slmdz(:,count));
         Slmdz(divzero,count)=0;
@@ -177,14 +179,15 @@ for l=1:S.li
         end
           if(reg)
                 Slmdy(:,count) = t1.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
-                if(S.scale)
-                Slmdy(:,count) = t1+l*y.*Slm(:,count).*r.^(-2);             
+                  if(S.scale)
+                  Slmdy(:,count) = t1+l*y.*Slm(:,count).*r.^(-2) ;
+                  Slmdy(:,count) = Slmdy(:,count).*exp(l*log(r/rbar));
                 end
           else
-                
-                Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
-                if(S.scale)
-                Slmdy(:,count) = t1./r-(l+1)*y.*Slm(:,count)./(r.^3);
+            Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
+            if(S.scale)
+                  Slmdy(:,count) = t1./(r.^(1))-(l+1)*y.*Slm(:,count)./(r.^(3));
+                  Slmdy(:,count) = Slmdy(:,count).*exp(l*log(rbar./r));
                 end
             end  
         divzero = isnan(Slmdy(:,count));
@@ -231,12 +234,14 @@ for l=1:S.li
           if(reg)
                 Slmdx(:,count) = t1.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
                 if(S.scale)
-                Slmdx(:,count) = t1+l*x.*Slm(:,count).*r.^(-2);
+                  Slmdx(:,count) = t1+l*x.*Slm(:,count).*r.^(-2) ;
+                  Slmdx(:,count) = Slmdx(:,count).*exp(l*log(r/rbar));
                 end
             else
                 Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
                 if(S.scale)
-                Slmdx(:,count) = t1./r-(l+1)*x.*Slm(:,count)./(r.^3);
+                  Slmdx(:,count) = t1./(r.^(1))-(l+1)*x.*Slm(:,count)./(r.^(3));
+                  Slmdx(:,count) = Slmdx(:,count).*exp(l*log(rbar./r));
                 end
             end
         divzero = isnan(Slmdx(:,count));
