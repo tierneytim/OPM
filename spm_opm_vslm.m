@@ -9,6 +9,7 @@ function [vSlm] = spm_opm_vslm(S)
 %   S.o         - optional orientations            - Default: same as S.D
 %   S.or        - optional origin offset           - Default = [0,0,0]
 %   S.reg       - regular or irregular (boolean)   - Default: 1
+%   S.scale     - scale harmonic for stabilty      - Deult: 1
 % Output:
 %  vSlm            - matrix of vector spherical harmonic (n x (li^2+2*l))
 %__________________________________________________________________________
@@ -78,7 +79,9 @@ if ~isfield(S, 'reg')
     S.reg=1;
 end
 reg=S.reg;
-
+if ~isfield(S, 'scale')
+    S.scale=1;
+end
 %- prepare 
 %----------------------------------------------------------------------
 
@@ -101,44 +104,40 @@ for l=1:S.li
         %a=1;
         u = m*atan2(y,x);
         um =abs(m)*atan2(y,x);
-      
-        if(m<0) 
+        
+        if(m<0)
             Zlm=zlm(v,l,abs(m));
-            t1= a*sin(um).*Zlm;  
+            t1= a*sin(um).*Zlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
-            end
-        end   
+            
+        end
         
         if(m==0)
             Zlm=zlm(v,l,0);
             t1= a*Zlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
-            end
-        end    
-            
+        end
+        
         if(m>0)
             Zlm=zlm(v,l,abs(m));
             t1= a*cos(u).*Zlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
+        end
+        if(reg)
+            Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
+            if(S.scale)
+            Slmdz(:,count) = t1+l*z.*Slm(:,count).*r.^(-2);
+            end
+        else
+            Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
+            if(S.scale)
+            Slmdz(:,count) = t1./r -(l+1)*z.*Slm(:,count)./(r.^3);
             end
         end
-        
         divzero = isnan(Slmdz(:,count));
         Slmdz(divzero,count)=0;
         
-       count=count+1;
+        count=count+1;
     end
     
 end
@@ -159,23 +158,13 @@ for l=1:S.li
             t1= a*L*abs(m).*cos(um).*x./(x.^2+y.^2);
             t1(isnan(t1))=0;
             t1= t1+a*sin(um).*Ylm;
-            t1(isnan(t1))=0;
-            if(reg)
-                Slmdy(:,count) = t1.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
-            end   
+            t1(isnan(t1))=0;     
         end
         
         if(m==0)
             Ylm=ylm(v,l,0);
             t1= a*Ylm; 
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdy(:,count) = t1.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
-            end
         end    
             
         if(m>0)
@@ -185,12 +174,19 @@ for l=1:S.li
             t1(isnan(t1))=0;
             t1= t1+a*cos(u).*Ylm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdy(:,count) = t1.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
-            end
         end
+          if(reg)
+                Slmdy(:,count) = t1.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
+                if(S.scale)
+                Slmdy(:,count) = t1+l*y.*Slm(:,count).*r.^(-2);             
+                end
+          else
+                
+                Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
+                if(S.scale)
+                Slmdy(:,count) = t1./r-(l+1)*y.*Slm(:,count)./(r.^3);
+                end
+            end  
         divzero = isnan(Slmdy(:,count));
         Slmdy(divzero,count)=0;
         count=count+1;
@@ -214,21 +210,12 @@ for l=1:S.li
             t1(isnan(t1))=0;
             t1= t1+a*sin(um).*Xlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdx(:,count) = t1.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
-            end
+          
         end    
         if (m==0)
             Xlm=xlm(v,l,0);
             t1= a*Xlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdx(:,count) = t1.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
-            end
         end    
             
         if(m>0)
@@ -238,13 +225,20 @@ for l=1:S.li
             t1(isnan(t1))=0;
             t1=t1+a*cos(u).*Xlm;
             t1(isnan(t1))=0;
-            if(reg)
-                Slmdx(:,count) = t1.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
-            else
-                Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
-            end
+          
            
         end
+          if(reg)
+                Slmdx(:,count) = t1.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
+                if(S.scale)
+                Slmdx(:,count) = t1+l*x.*Slm(:,count).*r.^(-2);
+                end
+            else
+                Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
+                if(S.scale)
+                Slmdx(:,count) = t1./r-(l+1)*x.*Slm(:,count)./(r.^3);
+                end
+            end
         divzero = isnan(Slmdx(:,count));
         Slmdx(divzero,count)=0;
         
