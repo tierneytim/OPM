@@ -100,7 +100,7 @@ vSlm=zeros(size(x,1),n);
 count=1;
 for l=1:S.li
     for m=-l:l
-        a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
+        a = (-1)^m * sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
         %a=1;
         u = m*atan2(y,x);
         um =abs(m)*atan2(y,x);
@@ -114,7 +114,7 @@ for l=1:S.li
         
         if(m==0)
             Zlm=zlm(v,l,0);
-            t1= a*Zlm;
+            t1= sqrt((2*l+1)/(4*pi))*Zlm;
             t1(isnan(t1))=0;
         end
         
@@ -132,9 +132,9 @@ for l=1:S.li
         else
             Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
              if(S.scale)
-                  Slmdz(:,count) = t1./(r.^(1))-(l+1)*z.*Slm(:,count)./(r.^(3));
-                  Slmdz(:,count) = Slmdz(:,count).*exp(l*log(rbar./r));
-                end
+                  Slmdz(:,count) = t1-(l+1)*z.*Slm(:,count)./(r.^(2));
+                  Slmdz(:,count) = Slmdz(:,count).*exp((l+1)*log(rbar./r));
+             end
         end
         divzero = isnan(Slmdz(:,count));
         Slmdz(divzero,count)=0;
@@ -149,7 +149,7 @@ end
 count=1;
 for l=1:S.li
     for m=-l:l
-        a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
+        a = (-1)^m *sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
         %a=1;
         u = m*atan2(y,x);
         um =abs(m)*atan2(y,x);
@@ -165,7 +165,7 @@ for l=1:S.li
         
         if(m==0)
             Ylm=ylm(v,l,0);
-            t1= a*Ylm; 
+            t1= sqrt((2*l+1)/(4*pi))*Ylm; 
             t1(isnan(t1))=0;
         end    
             
@@ -186,8 +186,8 @@ for l=1:S.li
           else
             Slmdy(:,count) = t1./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
             if(S.scale)
-                  Slmdy(:,count) = t1./(r.^(1))-(l+1)*y.*Slm(:,count)./(r.^(3));
-                  Slmdy(:,count) = Slmdy(:,count).*exp(l*log(rbar./r));
+                  Slmdy(:,count) = t1-(l+1)*y.*Slm(:,count)./(r.^(2));
+                  Slmdy(:,count) = Slmdy(:,count).*exp((l+1)*log(rbar./r));
                 end
             end  
         divzero = isnan(Slmdy(:,count));
@@ -202,7 +202,7 @@ end
 count=1;
 for l=1:S.li
     for m=-l:l
-        a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
+        a = (-1)^m *sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
         %a=1;
         u = m*atan2(y,x);
         um =abs(m)*atan2(y,x);
@@ -217,7 +217,7 @@ for l=1:S.li
         end    
         if (m==0)
             Xlm=xlm(v,l,0);
-            t1= a*Xlm;
+            t1= sqrt((2*l+1)/(4*pi))*Xlm;
             t1(isnan(t1))=0;
         end    
             
@@ -237,13 +237,13 @@ for l=1:S.li
                   Slmdx(:,count) = t1+l*x.*Slm(:,count).*r.^(-2) ;
                   Slmdx(:,count) = Slmdx(:,count).*exp(l*log(r/rbar));
                 end
-            else
+          else
                 Slmdx(:,count) = t1./(r.^(l+1))-(l+1)*x.*Slm(:,count)./(r.^(l+3));
                 if(S.scale)
-                  Slmdx(:,count) = t1./(r.^(1))-(l+1)*x.*Slm(:,count)./(r.^(3));
-                  Slmdx(:,count) = Slmdx(:,count).*exp(l*log(rbar./r));
+                  Slmdx(:,count) = t1-(l+1)*x.*Slm(:,count)./(r.^(2));
+                  Slmdx(:,count) = Slmdx(:,count).*exp((l+1)*log(rbar./r));
                 end
-            end
+          end
         divzero = isnan(Slmdx(:,count));
         Slmdx(divzero,count)=0;
         
@@ -274,10 +274,10 @@ for k = m:l
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
     num = -x.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m*x.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
-    %numa= (x.*z.^(k-m)).*((x.^2+y.^2).^(m/2-1));
-    %numb=m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
-    %Xlm=Xlm+b*c*(numa.*numb)./(r.^(2+k));
-    Xlm=Xlm+b*c*(num)./(r.^(2+k));
+    numa= (x.*z.^(k-m)).*((x.^2+y.^2).^(m/2-1));
+    numb= m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
+    Xlm=Xlm+b*c*(numa.*numb)./(r.^(2+k));
+    %Xlm=Xlm+b*c*(num)./(r.^(2+k));
     
 end
 
@@ -296,10 +296,10 @@ for k = m:l
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
     num = -y.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m.*y.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
-    %numa = (y.*z.^(k-m)).*((x.^2+y.^2).^(m/2-1));
-    %numb =m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
-   % Ylm=Ylm+b*c*(numa.*numb)./(r.^(2+k));
-    Ylm=Ylm+b*c*(num)./(r.^(2+k));
+    numa = (y.*z.^(k-m)).*((x.^2+y.^2).^(m/2-1));
+    numb =m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
+    Ylm=Ylm+b*c*(numa.*numb)./(r.^(2+k));
+    %Ylm=Ylm+b*c*(num)./(r.^(2+k));
 end
 
 end
@@ -316,11 +316,11 @@ for k = m:l
     val=prod((l+k-1)/2-(0:(l-1)));
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
-    num = z.^(k-m-1).*(k-m).*(x.^2+y.^2).^((m+2)/2) + (-m*z.^(k-m+1)).*(x.^2+y.^2).^(m/2);
-    %numa = (z.^(k-m-1)).*((x.^2+y.^2).^(m/2));
-    %numb =m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
-    %Zlm=Zlm+b*c*(-numa.*numb)./(r.^(2+k));
-    Zlm=Zlm+b*c*(num)./(r.^(2+k));
+    %num = z.^(k-m-1).*(k-m).*(x.^2+y.^2).^((m+2)/2) + (-m*z.^(k-m+1)).*(x.^2+y.^2).^(m/2);
+    numa = (z.^(k-m-1)).*((x.^2+y.^2).^(m/2));
+    numb =m*x.^2+m*y.^2+m*z.^2-k*x.^2-k*y.^2;
+    Zlm=Zlm+b*c*(-numa.*numb)./(r.^(2+k));
+    %Zlm=Zlm+b*c*(num)./(r.^(2+k));
     
     end
 
@@ -339,19 +339,20 @@ count=1;
 
 for l=1:li
     for  m = -l:l
-        a = sqrt((2*l+1)/4*pi* factorial(l-abs(m))/factorial(l+abs(m)));
+        a = (-1)^m *sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
        % a=1;
         if(m<0)
             L = plm(z./r,l,abs(m));
-            %Slm(:,count) =  a*L.*sin(abs(m)*acos(x./sqrt(x.^2+y.^2)));
+            Slm(:,count) =  a*L.*sin(abs(m)*acos(x./sqrt(x.^2+y.^2)));
             Slm(:,count) =  a*L.*sin(abs(m)*atan2(y,x));
         elseif m==0
             L = plm(z./r,l,0);
-            Slm(:,count) =a*L;
+            Slm(:,count) = sqrt((2*l+1)/(4*pi))*L;
         else
             L = plm(z./r,l,m);
-            %Slm(:,count) =  a*L.*cos(m*acos(x./sqrt(x.^2+y.^2)));
+            Slm(:,count) =  a*L.*cos(m*acos(x./sqrt(x.^2+y.^2)));
             Slm(:,count) =  a*L.*cos(m*atan2(y,x));
+          
         end
         divzero = isnan(Slm(:,count));
         Slm(divzero,count)=0;
