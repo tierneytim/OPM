@@ -106,6 +106,17 @@ S.positions='positions.tsv';
 D = spm_opm_create(S);
 ```
 
+### Importing Data from Fieldtrip
+In situations, where you have loaded your OPM data into [Fieldtrip](https://github.com/neurofractal/analyse_OPMEG) for pre-processing and/or sensor-level analyses, but wish to use SPM for forward modelling, you can convert the data using `spm_opm_create_ft`. This works for both epoched or un-epoched data.
+
+```matlab
+S =[];
+S.data = fieldtrip_structure;
+S.coordystem='coordsystem.json';
+S.sMRI='T1w.nii';
+D = spm_opm_create_ft(S);
+```
+
 <a name="d"></a>
 ## Preprocessing
 
