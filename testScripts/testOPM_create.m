@@ -96,3 +96,11 @@ S.positions = 'positions.tsv';
 S.sMRI= 'T1w.nii';
 D = spm_opm_sim(S);
 
+%% Fieldtrip to SPM Example
+load('data_ft.mat');
+
+S = [];
+S.data = data_ft;
+S.sMRI='T1w.nii';
+D = spm_opm_create_ft(S);
+
