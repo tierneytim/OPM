@@ -1,5 +1,5 @@
 function [vSlm] = spm_opm_vslm(S)
-% real regular/irregular vector spherical harmonics
+% cartesian real regular/irregular vector spherical harmonics
 % FORMAT vSlm   =  spm_opm_vslm(S)
 %   S               - input structure
 % Optional fields of S:
@@ -82,6 +82,9 @@ end
 
 n=S.li^2+2*S.li;
 r = sqrt(x.^2+y.^2+z.^2);
+xy = x./(x.^2+y.^2);
+yx = y./(x.^2+y.^2);
+atyx = atan2(y,x);
 rbar = mean(r);
 Slm = slm(v,S.li);
 Slmdx=zeros(size(x,1),n);
@@ -96,8 +99,8 @@ count=1;
 for l=1:S.li
     for m=-l:l
         a = (-1)^m * sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
-        u = m*atan2(y,x);
-        um =abs(m)*atan2(y,x);
+        u = m*atyx;
+        um =abs(m)*atyx;
         L = plm(z./r,l,abs(m));
         [Xlm,Ylm,Zlm]= dplm(v,l,abs(m));
         
@@ -106,10 +109,10 @@ for l=1:S.li
             t1= a*sin(um).*Zlm;
             t1(isnan(t1))=0;   
             %y
-            t2= a*L*abs(m).*cos(um).*x./(x.^2+y.^2)+a*sin(um).*Ylm;
+            t2= a*L*abs(m).*cos(um).*xy+a*sin(um).*Ylm;
             t2(isnan(t2))=0;
             %x
-            t3= -a*L*abs(m).*cos(um).*y./(x.^2+y.^2)+a*sin(um).*Xlm;
+            t3= -a*L*abs(m).*cos(um).*yx+a*sin(um).*Xlm;
             t3(isnan(t3))=0;
         end
         
@@ -130,10 +133,10 @@ for l=1:S.li
             t1= a*cos(u).*Zlm;
             t1(isnan(t1))=0;
             %y
-            t2= -a*L*m.*sin(u).*x./(x.^2+y.^2)+a*cos(u).*Ylm;
+            t2= -a*L*m.*sin(u).*xy+a*cos(u).*Ylm;
             t2(isnan(t2))=0;         
             %x
-            t3=a*L*m.*sin(u).*y./(x.^2+y.^2)+a*cos(u).*Xlm;
+            t3=a*L*m.*sin(u).*yx+a*cos(u).*Xlm;
             t3(isnan(t3))=0;
         end
       
@@ -159,7 +162,6 @@ for l=1:S.li
         end
         count=count+1;
     end
-    
 end
 
 %- cleanup
@@ -216,19 +218,15 @@ for l=1:li
        % a=1;
         if(m<0)
             L = plm(z./r,l,abs(m));
-            Slm(:,count) =  a*L.*sin(abs(m)*acos(x./sqrt(x.^2+y.^2)));
             Slm(:,count) =  a*L.*sin(abs(m)*atan2(y,x));
         elseif m==0
             L = plm(z./r,l,0);
             Slm(:,count) = sqrt((2*l+1)/(4*pi))*L;
         else
             L = plm(z./r,l,m);
-            Slm(:,count) =  a*L.*cos(m*acos(x./sqrt(x.^2+y.^2)));
             Slm(:,count) =  a*L.*cos(m*atan2(y,x));
           
         end
-        divzero = isnan(Slm(:,count));
-        Slm(divzero,count)=0;
         count=count+1;
     end
 end
