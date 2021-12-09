@@ -178,6 +178,10 @@ y=v(:,2);
 z=v(:,3);
 r= sqrt(x.^2+y.^2+z.^2);
 b= (-1)^m * 2^l;
+xpy= x.^2 +y.^2;
+xpym2= xpy.^(m/2);
+xpymm2= (xpy).^((m-2)/2);
+xpymp2=(xpy).^((m+2)/2);
 
 Xlm=0;
 Ylm=0;
@@ -187,14 +191,18 @@ for k = m:l
     val=prod((l+k-1)/2-(0:(l-1)));
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
+    const = -z.^(k-m).*(k-m).*xpym2 + (m.*z.^(k-m+2)).*xpymm2;
     
-    numx = -x.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m*x.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    %numx = -x.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m*x.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    numx = x.*const;
+    
     Xlm=Xlm+b*c*(numx)./(r.^(2+k));
     
-    numy = -y.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m.*y.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    %numy = -y.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m.*y.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    numy=y.*const;
     Ylm=Ylm+b*c*(numy)./(r.^(2+k));
     
-    numz= z.^(k-m-1).*(k-m).*(x.^2+y.^2).^((m+2)/2) + (-m*z.^(k-m+1)).*(x.^2+y.^2).^(m/2);
+    numz= z.^(k-m-1).*(k-m).*xpymp2 + (-m*z.^(k-m+1)).*xpym2;
     numz(isinf(numz))=0;
     Zlm=Zlm+b*c*(numz)./(r.^(2+k));     
 end
@@ -209,6 +217,7 @@ z=v(:,3);
 r= sqrt(x.^2+y.^2+z.^2);
 
 n=li^2+2*li;
+aty=atan2(y,x);
 Slm=zeros(size(v,1),n);
 count=1;
 
@@ -218,13 +227,15 @@ for l=1:li
        % a=1;
         if(m<0)
             L = plm(z./r,l,abs(m));
-            Slm(:,count) =  a*L.*sin(abs(m)*atan2(y,x));
+            %Slm(:,count) =  a*L.*sin(abs(m)*atan2(y,x));
+            Slm(:,count) =  a*L.*sin(abs(m)*aty);
+            
         elseif m==0
             L = plm(z./r,l,0);
             Slm(:,count) = sqrt((2*l+1)/(4*pi))*L;
         else
             L = plm(z./r,l,m);
-            Slm(:,count) =  a*L.*cos(m*atan2(y,x));
+            Slm(:,count) =  a*L.*cos(m*aty);
           
         end
         count=count+1;
@@ -236,10 +247,11 @@ end
 function [pl] = plm(x,l,m)
 b= (-1)^m * 2^l;
 pl =0;
+const = b*(1-x.^2).^(m/2);
 for k = m:l
     val=prod((l+k-1)/2-(0:(l-1)));
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
-    pl=pl+(b*(1-x.^2).^(m/2))*c.*x.^(k-m);
+    pl=pl+(const)*c.*x.^(k-m);
 end
 end
