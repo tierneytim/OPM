@@ -60,16 +60,13 @@ else
     z = p.chanpos(:,3);
     
 end
-
 if ~isfield(S, 'or')
     S.or = [0,0,0];
 end
-
 x = (x)-S.or(1);
 y = (y)-S.or(2);
 z = (z)-S.or(3);
 v = [x,y,z];
-
 if ~isfield(S, 'reg')
     S.reg=1;
 end
@@ -91,18 +88,23 @@ Slmdx=zeros(size(x,1),n);
 Slmdy=zeros(size(x,1),n);
 Slmdz=zeros(size(x,1),n);
 vSlm=zeros(size(x,1),n);
-
-
 %- dSdX dSdY dSdZ
 %----------------------------------------------------------------------
 count=1;
 for l=1:S.li
     for m=-l:l
+        
         a = (-1)^m * sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
         u = m*atyx;
         um =abs(m)*atyx;
         L = plm(z./r,l,abs(m));
         [Xlm,Ylm,Zlm]= dplm(v,l,abs(m));
+          Xlm(isinf(Xlm))=0;
+          Ylm(isinf(Ylm))=0;
+          Zlm(isinf(Zlm))=0;
+          
+          
+       % [sum(isinf(Xlm)|isnan(Xlm)),sum(isinf(Ylm)|isnan(Ylm)),sum(isinf(Zlm)|isnan(Zlm)),count]
         
         if(m<0)
             %z
@@ -115,7 +117,7 @@ for l=1:S.li
             t3= -a*L*abs(m).*cos(um).*yx+a*sin(um).*Xlm;
             t3(isnan(t3))=0;
         end
-        
+  
         if(m==0)
             %z
             t1= sqrt((2*l+1)/(4*pi))*Zlm;
@@ -139,7 +141,7 @@ for l=1:S.li
             t3=a*L*m.*sin(u).*yx+a*cos(u).*Xlm;
             t3(isnan(t3))=0;
         end
-      
+  
         if(reg)
             Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
             Slmdy(:,count) = t2.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
@@ -148,6 +150,7 @@ for l=1:S.li
                 Slmdz(:,count) = (t1+l*z.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
                 Slmdy(:,count) = (t2+l*y.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
                 Slmdx(:,count) = (t3+l*x.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
+               
             end         
         else
             Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
@@ -157,7 +160,6 @@ for l=1:S.li
                 Slmdz(:,count) = (t1-(l+1)*z.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
                 Slmdy(:,count) = (t2-(l+1)*y.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
                 Slmdx(:,count) = (t3-(l+1)*x.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
-
             end
         end
         count=count+1;
@@ -167,51 +169,57 @@ end
 %- cleanup
 %----------------------------------------------------------------------
 for i = 1:n
+     
 vSlm(:,i)=Slmdz(:,i).*nz+Slmdy(:,i).*ny+Slmdx(:,i).*nx;
-end
+%[[sum(isnan(Slmdx(:,i))), sum(isnan(Slmdy(:,i))), sum(isnan(Slmdz(:,i))) sum(isnan(vSlm(:,i))) i];
+%[sum(isinf(Slmdx(:,i))), sum(isinf(Slmdy(:,i))), sum(isinf(Slmdz(:,i))) sum(isinf(vSlm(:,i))) i]]
 
 end
 
+
+end
 function [Xlm,Ylm,Zlm] = dplm(v,l,m)
 x=v(:,1);
 y=v(:,2);
 z=v(:,3);
 r= sqrt(x.^2+y.^2+z.^2);
 b= (-1)^m * 2^l;
-
 Xlm=0;
 Ylm=0;
 Zlm=0;
-
 for k = m:l
     val=prod((l+k-1)/2-(0:(l-1)));
     vals2= prod(l-(0:(k-1)));
     c = (factorial(k)/factorial(k-m)) * vals2/factorial(k) * val/factorial(l);
     
     numx = -x.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m*x.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    numx(isinf(numx))=0;
+    numx(isnan(numx))=0;
+    
     Xlm=Xlm+b*c*(numx)./(r.^(2+k));
     
     numy = -y.*z.^(k-m).*(k-m).*(x.^2+y.^2).^(m/2) + (m.*y.*z.^(k-m+2)).*(x.^2+y.^2).^((m-2)/2);
+    numy(isinf(numy))=0;
+    numy(isnan(numy))=0;
+    
     Ylm=Ylm+b*c*(numy)./(r.^(2+k));
     
     numz= z.^(k-m-1).*(k-m).*(x.^2+y.^2).^((m+2)/2) + (-m*z.^(k-m+1)).*(x.^2+y.^2).^(m/2);
     numz(isinf(numz))=0;
+    numz(isnan(numz))=0;
+    
     Zlm=Zlm+b*c*(numz)./(r.^(2+k));     
 end
-
 end
 
 function [Slm] = slm(v,li)
-
 x=v(:,1);
 y=v(:,2);
 z=v(:,3);
 r= sqrt(x.^2+y.^2+z.^2);
-
 n=li^2+2*li;
 Slm=zeros(size(v,1),n);
 count=1;
-
 for l=1:li
     for  m = -l:l
         a = (-1)^m *sqrt((2*l+1)/(2*pi)* factorial(l-abs(m))/factorial(l+abs(m)));
@@ -225,14 +233,14 @@ for l=1:li
         else
             L = plm(z./r,l,m);
             Slm(:,count) =  a*L.*cos(m*atan2(y,x));
-          
+
         end
         count=count+1;
     end
 end
 
+    
 end
-
 function [pl] = plm(x,l,m)
 b= (-1)^m * 2^l;
 pl =0;
