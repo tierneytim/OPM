@@ -7,7 +7,7 @@ function [mfD,Yinds] = spm_opm_hfc(S)
 %   S.usebadchans   - logical to correct channels marked as bad      - Default: 0
 %   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
 %   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
-%   S.balance       - logical to update forward model                - Default 0
+%   S.balance       - logical to update forward model                - Default 1
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
@@ -24,13 +24,13 @@ if ~isfield(S, 'D'),             error(errorMsg); end
 if ~isfield(S, 'usebadchans'),   S.usebadchans = 0; end
 if ~isfield(S, 'chunkSize'),     S.chunkSize = 512; end
 if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
-if ~isfield(S, 'balance'),       S.balance = 0; end
+if ~isfield(S, 'balance'),       S.balance = 1; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
 
 s = sensors(S.D,'MEG');
-if isempty(s)==1;
+if isempty(s)==1
     error('Could not find sensor positions')
 end
 
