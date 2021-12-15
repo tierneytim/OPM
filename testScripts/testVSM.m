@@ -2,6 +2,8 @@
 sp = spm_mesh_sphere(5);
 sp.vertices= sp.vertices*50;
 
+% non spherical surfaces are accurate to a few ppm
+% sp = gifti([spm('dir'),'\canonical\scalp_2562.surf.gii']);
 
 nv = spm_mesh_normals(sp);
 
