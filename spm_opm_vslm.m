@@ -39,6 +39,10 @@ function [vSlm] = spm_opm_vslm(S)
 %  end
 %- handle arguments
 %----------------------------------------------------------------------
+
+%- MEG object or matrices
+%----------------------------------------------------------------------
+
 if ~isfield(S, 'D')
     x=S.v(:,1);
     y=S.v(:,2);
@@ -60,29 +64,56 @@ else
     z = p.chanpos(:,3);
     
 end
+
+%- set the origin offset
+%----------------------------------------------------------------------
 if ~isfield(S, 'or')
     S.or = [0,0,0];
 end
+
 x = (x)-S.or(1);
 y = (y)-S.or(2);
 z = (z)-S.or(3);
 v = [x,y,z];
+
+%- regular or irregular harmonics
+%----------------------------------------------------------------------
 if ~isfield(S, 'reg')
     S.reg=1;
 end
 reg=S.reg;
+
+%- scaling of coordinate system to prevent infinities
+%----------------------------------------------------------------------
+
 if ~isfield(S, 'scale')
     S.scale=1;
+end
+
+if(S.scale)
+    % need high precision to prevent overflow
+    x= double(x);
+    y= double(y);
+    z= double(z);
+    
+    sc= max(sqrt(x.^2+y.^2+z.^2));
+    x= x/sc;
+    y=y/sc;
+    z=z/sc;
+    v = [x,y,z];
 end
 %- prepare 
 %----------------------------------------------------------------------
 
 n=S.li^2+2*S.li;
 r = sqrt(x.^2+y.^2+z.^2);
+rbar = mean(r);
+
+
 xy = x./(x.^2+y.^2);
 yx = y./(x.^2+y.^2);
 atyx = atan2(y,x);
-rbar = mean(r);
+
 Slm = slm(v,S.li);
 Slmdx=zeros(size(x,1),n);
 Slmdy=zeros(size(x,1),n);
@@ -99,12 +130,13 @@ for l=1:S.li
         um =abs(m)*atyx;
         L = plm(z./r,l,abs(m));
         [Xlm,Ylm,Zlm]= dplm(v,l,abs(m));
+       %[sum(isinf(Xlm)|isnan(Xlm)),sum(isinf(Ylm)|isnan(Ylm)),sum(isinf(Zlm)|isnan(Zlm)),count]
+       
           Xlm(isinf(Xlm))=0;
           Ylm(isinf(Ylm))=0;
           Zlm(isinf(Zlm))=0;
           
           
-       % [sum(isinf(Xlm)|isnan(Xlm)),sum(isinf(Ylm)|isnan(Ylm)),sum(isinf(Zlm)|isnan(Zlm)),count]
         
         if(m<0)
             %z
@@ -145,22 +177,11 @@ for l=1:S.li
         if(reg)
             Slmdz(:,count) = t1.*r.^(l)+l*z.*Slm(:,count).*r.^(l-2);
             Slmdy(:,count) = t2.*r.^(l)+l*y.*Slm(:,count).*r.^(l-2);
-            Slmdx(:,count) = t3.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);
-            if(S.scale)
-                Slmdz(:,count) = (t1+l*z.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
-                Slmdy(:,count) = (t2+l*y.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
-                Slmdx(:,count) = (t3+l*x.*Slm(:,count).*r.^(-2)).*exp(l*log(r/rbar)) ;
-               
-            end         
+            Slmdx(:,count) = t3.*r.^(l)+l*x.*Slm(:,count).*r.^(l-2);     
         else
             Slmdz(:,count) = t1./r.^(l+1)-(l+1)*z.*Slm(:,count)./r.^(l+3);
             Slmdy(:,count) = t2./r.^(l+1)-(l+1)*y.*Slm(:,count)./r.^(l+3);
             Slmdx(:,count) = t3./r.^(l+1)-(l+1)*x.*Slm(:,count)./r.^(l+3);
-            if(S.scale)
-                Slmdz(:,count) = (t1-(l+1)*z.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
-                Slmdy(:,count) = (t2-(l+1)*y.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
-                Slmdx(:,count) = (t3-(l+1)*x.*Slm(:,count)./(r.^(2))).*exp((l+1)*log(rbar./r));
-            end
         end
         count=count+1;
     end
