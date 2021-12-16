@@ -1,11 +1,11 @@
 function [data_out]=spm_opm_downsample(S)
 % Filter raw data off of the FIL's OPM scanner and then downsample it via
-% decimation.
+% decimation. A custom anti-aliasing filter is applied.
 %
 % Note that non-MEG channels (i.e. trigger and flux channels)
 % will not be filtered, but just downsampled via decimation.
 %
-% Note also that changes to the D object are *NOT* saved to disk.
+% Changes to the D object are saved to disk.
 %
 % FORMAT D = spm_opm_downsample(S)
 %   S               - input structure
