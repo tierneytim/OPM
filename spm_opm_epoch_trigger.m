@@ -10,13 +10,15 @@ function D = spm_opm_epoch_trigger(S)
 %                     the trigger in ms.
 %   S.condLabels    - n x 1 cell containing condition    -Default: Cond N
 %                     labels
+%   S.bc            - boolean option to baseline         -Default: 0
+%                     correct data   
 % Output:
 %  D           - epoched MEEG object (also written to disk)
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_epoch_trigger.m 7779 2020-02-05 13:53:14Z tim $
+% $Id$
 
 
 %-Set Defaults
@@ -32,6 +34,10 @@ if ~isfield(S, 'condLabels')
     args.base='Cond';
     args.n=nTrigs;
     S.condLabels=spm_create_labels(args);
+end
+
+if ~isfield(S,'bc')
+    S.bc = 0;
 end
 
 if(size(S.timewin,1)<nTrigs)
@@ -78,7 +84,7 @@ args = [];
 args.D = S.D;
 args.trl = trl;
 args.conditionlabels =cond;
-args.bc = 0;
+args.bc = S.bc;
 args.prefix = 'e_';
 D = spm_eeg_epochs(args);
 

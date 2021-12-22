@@ -11,7 +11,7 @@ function [SSPD,Yinds] = spm_opm_SSP(S)
 %   SSPD            - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 %
 % The code here implements a very basic Signal Space Projection. No forward
 % model corrections are currently made and therefore this function should 
@@ -21,7 +21,7 @@ function [SSPD,Yinds] = spm_opm_SSP(S)
 % spm_opm_mfc shuold be  used 
 
 % Tim Tierney
-% $Id: spm_opm_SSP.m 7646 2019-07-25 13:58:46Z tim $
+% $Id$
 
 %-Set default values
 %--------------------------------------------------------------------------

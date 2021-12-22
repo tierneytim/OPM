@@ -14,10 +14,10 @@ function [shield,f] = spm_opm_rpsd(S)
 %   sf              - Shielding factor ( in data units or decibels)
 %   f               - frequencies psd is sampled at
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_rpsd.m 7782 2020-02-11 11:33:49Z tim $
+% $Id$
 
 %-ArgCheck
 %--------------------------------------------------------------------------

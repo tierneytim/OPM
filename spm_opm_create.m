@@ -26,10 +26,10 @@ function [D,L] = spm_opm_create(S)
 %  D           - MEEG object (also written to disk)
 %  L           - Lead field (also written on disk)
 %__________________________________________________________________________
-% Copyright (C) 2018-2021 Wellcome Centre for Human Neuroimaging
+% Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_create.m 7778 2020-02-05 13:52:28Z tim $
+% $Id$
 spm('FnBanner', mfilename);
 
 %-Set default values

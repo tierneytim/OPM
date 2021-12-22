@@ -12,10 +12,10 @@ function [M] = spm_opm_topa(S)
 % Output:
 %   M               - Patch object
 %__________________________________________________________________________
-% Copyright (C) 2018 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 
 % Tim Tierney
-% $Id: spm_opm_topa.m 7646 2019-07-25 13:58:46Z tim $
+% $Id$
 
 
 %-Set default values
