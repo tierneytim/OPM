@@ -5,6 +5,7 @@ testData/*.nii
 testData/*.lvm
 testScripts/*.asv
 testScripts/*local.m
+junk/**
 
 *.asv
 !testData/testCustom.gii
