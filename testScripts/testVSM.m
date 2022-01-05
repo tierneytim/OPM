@@ -2,14 +2,14 @@
 sp = spm_mesh_sphere(5);
 sp.vertices= sp.vertices*50;
 
-% non spherical surfaces are accurate to a few ppm
+% non spherical surface 
 % sp = gifti([spm('dir'),'\canonical\scalp_2562.surf.gii']);
 
 nv = spm_mesh_normals(sp);
 
 % general solution
 S=[];
-S.li=15;
+S.li=3;
 S.reg=1;
 S.v=sp.vertices;
 S.o=nv;
@@ -21,10 +21,10 @@ ex = nv(:,1);
 ey = nv(:,2);
 ez = nv(:,3);
 
-% position on scaled sphere
-x = sp.vertices(:,1);
-y = sp.vertices(:,2);
-z = sp.vertices(:,3);
+% position on scaled sphere(double required for precision on non spherical)
+x = double(sp.vertices(:,1));
+y = double(sp.vertices(:,2));
+z = double(sp.vertices(:,3));
 
 
 % brute force solution 
