@@ -33,6 +33,7 @@ if ~isfield(S, 'plot'),          S.plot = 0; end
 if ~isfield(S, 'D'),             error('D is required'); end
 if ~isfield(S, 'trials'),        S.trials=0; end
 if ~isfield(S, 'wind'),          S.wind=@hanning; end
+if ~isfield(S, 'interact'),      S.interact=1; end
 
 
 %-channel Selection
@@ -124,8 +125,12 @@ po = psdx;
 
 if(S.plot)
     f= figure();
-    semilogy(freq,po,'LineWidth',2);
     hold on
+    for i = 1:size(po,2)
+        plot(freq,po(:,i)','LineWidth',2,'tag',labs{i});
+    end
+    set(gca,'yscale','log')
+    
     xp2 =0:round(freq(end));
     yp2=ones(1,round(freq(end))+1)*S.constant;
     p2 =plot(xp2,yp2,'--k');
@@ -141,6 +146,20 @@ if(S.plot)
     ax.TickLength = [0.02 0.02];
     fig= gcf;
     fig.Color=[1,1,1];
+    xlim([0,100]);
+    if(S.interact)
+        datacursormode on
+        dcm = datacursormode(gcf);
+        set(dcm,'UpdateFcn',@getLabel)
+    end
 end
 
+end
+
+function txt = getLabel(trash,event)
+pos = get(event,'Position');
+dts = get(event.Target,'Tag');
+txt = {dts,...
+       ['Frequency: ',num2str(pos(1))],...
+     ['RMS: ',num2str(pos(2))]};
 end
