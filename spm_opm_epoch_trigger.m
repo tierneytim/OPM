@@ -28,6 +28,7 @@ cTypes= chantype(S.D);
 trigInds= strmatch('TRIG',cTypes);
 nTrigs =length(trigInds);
 trigs=S.D(trigInds,:);
+fprintf('%-40s: %30s\n',[num2str(nTrigs) ' Triggers channels identified'],spm('time'));
 
 if ~isfield(S, 'condLabels')
     args =[];
@@ -70,12 +71,17 @@ end
     
     trlTemp=round([begSample'  endSample'  offset']);  % Construct temporary trial matrix
     nevents(i)=size(trlTemp,1);                        % Compute number of events per Condition
+    triglab = chanlabels(S.D,trigInds(i));
+    msg=[num2str(nevents(i)) ' Trials identified on ' triglab{:}];
+    fprintf('%-40s: %30s\n',msg,spm('time'));
+
     trl = [trl;trlTemp];                               % Combine trl matrices accross conditions
     
     condTemp =repmat({S.condLabels{i}},nevents(i),1);  % Replicate codition lable accross events
     cond = {cond{:,:},condTemp{:,1}}';                 % Combine condition labels accross conditions
     
 end
+
 
 
 % Actually do the epoching now
