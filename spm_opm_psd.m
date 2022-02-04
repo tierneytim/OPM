@@ -127,7 +127,8 @@ if(S.plot)
     f= figure();
     hold on
     for i = 1:size(po,2)
-        plot(freq,po(:,i)','LineWidth',2,'tag',labs{i});
+        tag = [labs{i}, ', Index: ' num2str(indchannel(S.D,labs{i}))];
+        plot(freq,po(:,i)','LineWidth',2,'tag',tag);
     end
     set(gca,'yscale','log')
     
@@ -135,7 +136,7 @@ if(S.plot)
     yp2=ones(1,round(freq(end))+1)*S.constant;
     p2 =plot(xp2,yp2,'--k');
     p2.LineWidth=2;
-    p3=semilogy(freq,median(po,2),'LineWidth',2);
+    p3=semilogy(freq,median(po,2),'LineWidth',2,'tag','Median');
     p3.Color='k';
     xlabel('Frequency (Hz)')
     labY = ['$$PSD (' S.units ' \sqrt[-1]{Hz}$$)'];
