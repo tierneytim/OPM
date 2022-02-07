@@ -10,6 +10,7 @@ function [vSlm] = spm_opm_vslm(S)
 %   S.or        - optional origin offset           - Default = [0,0,0]
 %   S.reg       - regular or irregular (boolean)   - Default: 1
 %   S.scale     - scale harmonic for stabilty      - Default: 1
+%   S.li        - order of harmonic                - Default: 1
 % Output:
 %  vSlm            - matrix of vector spherical harmonic (n x (li^2+2*l))
 %__________________________________________________________________________
@@ -39,6 +40,11 @@ function [vSlm] = spm_opm_vslm(S)
 %  view([59,28])
 %  end
 %- handle arguments
+%----------------------------------------------------------------------
+if ~isfield(S, 'li')
+S.li=1;
+end 
+%- Order 
 %----------------------------------------------------------------------
 
 %- MEG object or matrices

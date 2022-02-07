@@ -25,6 +25,7 @@ if ~isfield(S, 'usebadchans'),   S.usebadchans = 0; end
 if ~isfield(S, 'chunkSize'),     S.chunkSize = 512; end
 if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
 if ~isfield(S, 'balance'),       S.balance = 1; end
+if ~isfield(S, 'L'),             S.L = 1; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
@@ -47,7 +48,14 @@ else
     sinds = setdiff(LabInds,indsRem);
     usedLabs= s.label(sinds);
 end
-X= s.coilori(sinds,:);
+
+%-Define harmonic Basis Set
+%--------------------------------------------------------------------------
+args=[];
+args.o= s.coilori(sinds,:);
+args.v = s.coilpos(sinds,:);
+args.li = S.L;
+X = spm_opm_vslm(args);
 fprintf('%-40s: %30s\n','Created Design Matrix',spm('time'));
 
 %-Compute projector
