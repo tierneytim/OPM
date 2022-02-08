@@ -53,9 +53,9 @@ if ~isfield(S, 'headshape');   S.headshape = [];            end
 try % work out if data is a matrix or a file
     [direc, dataFile] = fileparts(S.data);
     binData=1;
-
-%- Cerca magnetics support
-%----------------------------------------------------------------------
+    
+    %- Cerca magnetics support
+    %----------------------------------------------------------------------
     if strcmpi(num2str(S.data(end-4:end)),'.cMEG')
         forward = 0;
         subjectSource=0;
@@ -296,6 +296,7 @@ if positions
     D = sensors(D, 'MEG', grad);
     save(D);
     
+    
     %- 2D view based on mean orientation of sensors
     n1=mean(grad.coilori); n1= n1./sqrt(dot(n1,n1));
     t1=cross(n1,[0 0 1]);
@@ -317,9 +318,14 @@ if positions
         warning(message);
     else
         args=[];
+        try
+            args.xy =   Data.xy';
+            args.label = Data.xylabs;
+        catch
+            args.xy= pos2d';
+            args.label=grad.label;
+        end
         args.D=D;
-        args.xy= pos2d';
-        args.label=grad.label;
         args.task='setcoor2d';
         D=spm_eeg_prep(args);
         D.save;
@@ -733,6 +739,19 @@ if(pos)
     positions.Oy = Sens_ors(:,2);
     positions.Oz = Sens_ors(:,3);
     bids.position = positions;
+    
+    % big assumtion that z is radial to head
+    a= positions.name;
+    
+    xy = zeros(size(positions.name,1),2);
+    xylabs = positions.name;
+    for i = 1:size(Helmet_info.lay.pos,1)
+        xy(2*i-1,:)=Helmet_info.lay.pos(i,:);
+        xy(2*i,:)=Helmet_info.lay.pos(i,:);
+    end
+    bids.xy= xy;
+    bids.xylabs=xylabs;
+    
 end
 
 %- output cerca data in bids format
