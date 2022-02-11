@@ -81,7 +81,7 @@ try % work out if data is a matrix or a file
     
 catch % if not readable check if it is numeric
     if ~isa(S.data,'numeric') % if not numeric throw error
-        error('A valid dataest or file was not supplied')
+        error('A valid dataset or file was not supplied')
     end
     binData=0;
     direc = pwd();
