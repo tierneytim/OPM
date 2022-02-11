@@ -22,7 +22,9 @@ if ~isfield(S, 'win'),    error('a time window(ms) must be supplied.'); end
 if ~isfield(S, 'band'),   error('a frequency band must be supplied'); end
 if ~isfield(S, 'chunkSize'),   S.chunkSize=200; end
 
-
+if size(S.D,3)>1
+    error('epoched data is currently not supported');
+end
 %-Filter to specific band
 %--------------------------------------------------------------------------
 args = [];
