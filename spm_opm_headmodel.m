@@ -49,6 +49,15 @@ elseif isnumeric(S.sMRI)
     end
 end
 
+% check whether coordsystem actually exists, as it might have been
+% auto-imported from spm_opm_create
+if ~isempty(S.coordsystem)
+    if ~exist(S.coordststem,'file')
+        warning('coordystem not found');
+        S.coordystem = [];
+    end
+end
+
 % identify what kind of headmodel specification to do, this should result
 % in a mutually exclusive job dictated
 do.nothing              = 0;
