@@ -97,7 +97,9 @@ base = strsplit(dataFile,'meg');
 chanFile = fullfile(direc,[base{1},'channels.tsv']);
 megFile = fullfile(direc,[base{1},'meg.json']);
 posFile = spm_select('FPList',direc,[base{1},'positions.tsv']);
-coordFile = fullfile(direc,[base{1},'coordsystem.json']);
+if isempty(S.coordsystem)
+    S.coordsystem = fullfile(direc,[base{1},'coordsystem.json']);
+end
 
 %- Check for channel Info
 %--------------------------------------------------------------------------
@@ -313,18 +315,6 @@ if positions
     end
     
 end
-% if ~isfield(S,'D'); error('please specify a MEEG object!'); end
-% if ~isfield(S,'template');      S.template = 0;             end
-% if ~isfield(S,'sMRI');          S.sMRI = [];                end
-% if ~isfield(S,'coordsystem');   S.coordsystem = [];         end
-% if ~isfield(S,'headshape');     S.headshape = [];           end
-% if ~isfield(S,'meshres');       S.meshres = 1;              end
-% if ~isfield(S,'iskull');        S.iskull = [];              end
-% if ~isfield(S,'oskull');        S.oskull = [];              end
-% if ~isfield(S,'scalp');         S.scalp = [];               end
-% if ~isfield(S,'cortex');        S.cortex = [];              end
-% if ~isfield(S,'voltype');       S.voltype = 'Single Shell'; end
-% if ~isfield(S,'lead');          S.lead = 0;                 end
 
 
 fprintf('%-40s: %30s\n','Completed',spm('time'));
