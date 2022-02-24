@@ -313,7 +313,7 @@ if positions
     else
         D = spm_opm_headmodel(args);
     end
-    
+    D.save;
 end
 
 

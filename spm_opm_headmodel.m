@@ -52,9 +52,9 @@ end
 % check whether coordsystem actually exists, as it might have been
 % auto-imported from spm_opm_create
 if ~isempty(S.coordsystem)
-    if ~exist(S.coordststem,'file')
-        warning('coordystem not found');
-        S.coordystem = [];
+    if ~exist(S.coordsystem,'file')
+        warning('coordsystem not found');
+        S.coordsystem = [];
     end
 end
 
