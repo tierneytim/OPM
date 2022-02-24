@@ -47,7 +47,7 @@ end
 
 % deal with the nothing job
 if do.nothing
-    fprintf('No files for coregistration supplied, skipping\n')
+    waarning('No files for coregistration supplied, skipping\n')
 end
 
 %- MRI and meshes.
@@ -92,7 +92,7 @@ if do.fiducials || do.coreg
     end
     
 elseif do.identity
-    fprintf('Assuming sensors and MRI are in same space\n')
+    warning('Assuming sensors and MRI are in same space\n')
     fid.fid.label = {'nas', 'lpa', 'rpa'}';
     fid.fid.pnt = D.inv{1}.mesh.fid.fid.pnt(1:3,:); % George O'Neill
     fid.pnt = [];
@@ -123,8 +123,8 @@ if do.coreg
         end
         M.pnt = [];
     else
-        fprintf(['Anatomical landmarks not found in coordsystem.json, '...
-            'will use derived fiducials from MRI itself\n']);
+        warning(['Anatomical landmarks not found in coordsystem.json, '...
+            'will use derived fiducials from MRI itself']);
         
         % try and match up with some common names
         targets = {'nz','nas','nasion','lpa','rpa'};
@@ -134,7 +134,7 @@ if do.coreg
                 'assuming nas/lpa/rpa ordering']);
             M.fid.label     = {'nas', 'lpa', 'rpa'}';
             M.fid.pnt       = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
-            M.pnt           = [];
+            
         else
             for ii = 1:numel(hnames)
                 switch find(strcmpi(targets,hnames{ii}))
@@ -153,6 +153,11 @@ if do.coreg
                 end
             end
         end
+        if isempty(S.headshape)
+            M.pnt           = [];
+        else
+            M.pnt = D.inv{1}.mesh.fid.pnt;
+        end
         
     end
     
@@ -160,7 +165,11 @@ elseif do.identity
     
     M.fid.label     = {'nas', 'lpa', 'rpa'}';
     M.fid.pnt       = D.inv{1}.mesh.fid.fid.pnt(1:3,:);
-    M.pnt           = [];
+    if isempty(S.headshape)
+        M.pnt           = [];
+    else
+        M.pnt = D.inv{1}.mesh.fid.pnt;
+    end
     
 end
 

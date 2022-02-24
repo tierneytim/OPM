@@ -36,6 +36,7 @@ spm('FnBanner', mfilename);
 %--------------------------------------------------------------------------
 if ~isfield(S, 'voltype'),     S.voltype = 'Single Shell';  end
 if ~isfield(S, 'meshres'),     S.meshres = 1;               end
+if ~isfield(S, 'sMRI'),        S.sMRI = [];                 end
 if ~isfield(S, 'scalp'),       S.scalp = [];                end
 if ~isfield(S, 'template'),    S.template = 0;              end
 if ~isfield(S, 'cortex'),      S.cortex = [];               end
@@ -46,7 +47,7 @@ if ~isfield(S, 'path'),        S.path = [];                 end
 if ~isfield(S, 'precision'),   S.precision = 'single';      end
 if ~isfield(S, 'lead'),        S.lead = 0;                  end
 if ~isfield(S, 'headshape');   S.headshape = [];            end
-
+if ~isfield(S, 'coordsystem'); S.coordsystem = [];          end
 
 %- identify Binary File
 %----------------------------------------------------------------------
@@ -304,8 +305,12 @@ if positions
     for ii = 1:numel(targets)
         args.(targets{ii}) = S.(targets{ii});
     end
-    keyboard
     
+    if S.lead
+        [D,L] = spm_opm_headmodel(args);
+    else
+        D = spm_opm_headmodel(args);
+    end
     
 end
 % if ~isfield(S,'D'); error('please specify a MEEG object!'); end
