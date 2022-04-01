@@ -29,7 +29,7 @@ function Dnew = spm_eeg_ffilter(S)
 
 SVNrev = '$Rev: 7125 $';
 
-if ~isfield(S, 'dir'),    S.dir    = 'onepass';     end
+if ~isfield(S, 'dir'),    S.dir    = 'twopass';     end
 if ~isfield(S, 'chunkSize'),    S.chunkSize    = 200;     end
 if ~isfield(S, 'prefix'), S.prefix = 'f';           end
 if ~isfield(S, 'order'),  S.order=5; end
@@ -82,7 +82,7 @@ if isempty(Fchannels)
 end
     
 
-%- filter coeffciients (just lowpass for now)
+%- stability check
 %--------------------------------------------------------------------------
 
 unstable =1;
@@ -99,7 +99,7 @@ while (unstable)
 end
    
 
-%- Work out chunk size
+%- Work out memory chunk size
 %--------------------------------------------------------------------------
 chunkSamples= round(S.chunkSize/(8*size(S.D,1))*1e6);
 begs=1:chunkSamples:size(S.D,2);
@@ -148,7 +148,7 @@ Dnew.save();
 %     
 %-Cleanup
 %--------------------------------------------------------------------------
-fprintf('%-40s: %30s\n','Completed',spm('time'));                       %-#
+fprintf('%-40s: %30s\n','Completed',spm('time'));                       
 
 end
 
