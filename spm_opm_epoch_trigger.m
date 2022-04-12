@@ -29,7 +29,7 @@ function [D, trl] = spm_opm_epoch_trigger(S)
 if ~isfield(S, 'D'),       error('D is required'); end
 
 if isfield(S, 'triggerChannels')
-    trigInds = selectchannels(S.D, S.triggerChannels);
+    trigInds = indchannel(S.D, S.triggerChannels);
 else
     cTypes= chantype(S.D);
     trigInds= strmatch('TRIG',cTypes);
@@ -67,11 +67,11 @@ for i=1:nTrigs
     
     tChan=trigs(i,:);                                  % Get ith trigger
 
-if(~isfield(S, 'thresh'))
-    thresh=std(tChan)*2;
-else
-    thresh = S.thresh;% Threshold it
-end
+    if(~isfield(S, 'thresh'))
+        thresh=std(tChan)*2;
+    else
+        thresh = S.thresh;% Threshold it
+    end
     evSamples=find(diff(tChan>thresh)==1)+1;           % Find 1st sample exceeding threshold
     offsetTime=S.timewin(i,1)/1000;                    % Offset in seconds
     offsetSamples=round(offsetTime.*S.D.fsample);      % Offset in samples
