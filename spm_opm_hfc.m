@@ -1,9 +1,10 @@
 function [mfD,Yinds] = spm_opm_hfc(S)
-% remove interference that behaves as if it was from a homogeneous (magnetic) field
+% remove interference that behaves as if it was from a harmonic (magnetic) field
 % FORMAT D = spm_opm_hfc(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                                - Default: no Default
+%	S.L 			- Spherical harmonic order (1=homogenous field)	 - Default: 1
 %   S.usebadchans   - logical to correct channels marked as bad      - Default: 0
 %   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
 %   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
