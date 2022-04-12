@@ -1,4 +1,4 @@
-function D = spm_opm_epoch_trigger(S)
+function [D, trl] = spm_opm_epoch_trigger(S)
 % Epoch M/EEG data based on supplied triggers or triggers in file;
 % FORMAT D = spm_opm_epoch_trigger(S)
 %   S               - input structure
@@ -12,8 +12,11 @@ function D = spm_opm_epoch_trigger(S)
 %                     labels
 %   S.bc            - boolean option to baseline         -Default: 0
 %                     correct data   
+%   S.triggerChannels   - n x 1 cell containing trigger  - Default: all TRIG channels
+%                         channel names
 % Output:
 %  D           - epoched MEEG object (also written to disk)
+% trl          - the trial matrix used to epoch the data
 %__________________________________________________________________________
 % Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 
@@ -24,13 +27,23 @@ function D = spm_opm_epoch_trigger(S)
 %-Set Defaults
 %--------------------------------------------------------------------------
 if ~isfield(S, 'D'),       error('D is required'); end
-cTypes= chantype(S.D);
-trigInds= strmatch('TRIG',cTypes);
+
+if isfield(S, 'triggerChannels')
+    trigInds = selectchannels(S.D, S.triggerChannels);
+else
+    cTypes= chantype(S.D);
+    trigInds= strmatch('TRIG',cTypes);
+end
 nTrigs =length(trigInds);
 trigs=S.D(trigInds,:);
+
 fprintf('%-40s: %30s\n',[num2str(nTrigs) ' Triggers channels identified'],spm('time'));
 
-if ~isfield(S, 'condLabels')
+if isfield(S, 'condLabels')
+    if length(S.condLabels) ~= nTrigs
+        error('Number of conditions must equal number of trigger channels selected');
+    end
+else
     args =[];
     args.base='Cond';
     args.n=nTrigs;
