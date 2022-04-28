@@ -9,6 +9,7 @@ function [mfD,Yinds] = spm_opm_hfc(S)
 %   S.chunkSize     - max memory usage(for large datasets)           - Default 512(MB)
 %   S.badChanThresh - threshold (std) to identify odd channels       - Default 50 (pT)
 %   S.balance       - logical to update forward model                - Default 1
+%   S.prefix        - prefix to filename                             - Default 'h'
 % Output:
 %   D               - denoised MEEG object (also written to disk)
 %   Yinds           - the indices of filtered channels
@@ -27,6 +28,7 @@ if ~isfield(S, 'chunkSize'),     S.chunkSize = 512; end
 if ~isfield(S, 'badChanThresh'), S.badChanThresh = 50; end
 if ~isfield(S, 'balance'),       S.balance = 1; end
 if ~isfield(S, 'L'),             S.L = 1; end
+if ~isfield(S, 'prefix'),        S.prefix = 'h'; end
 
 %-Get design matrix
 %--------------------------------------------------------------------------
@@ -74,7 +76,7 @@ else
 %-create ouput dataset object
 %--------------------------------------------------------------------------
 fprintf('Creating output dataset\n'); 
-outname = fullfile(path(S.D),['MF_' fname(S.D)]);
+outname = fullfile(path(S.D),[S.prefix fname(S.D)]);
 mfD = clone(S.D,outname);
 mfD.save();
 
