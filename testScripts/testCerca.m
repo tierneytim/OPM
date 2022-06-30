@@ -17,19 +17,6 @@ datadir = fullfile(testdir,'..','testData','cerca');
 
 cd(datadir)
 
-%% Unzip cMEG data 
-
-zipped = fullfile(fullfile(datadir,'20220623_095714.tar.gz'));
-tmptar = [tempname '.tar'];
-tmpgz = [tmptar '.gz'];
-
-copyfile(zipped,tmpgz);
-gunzip(tmpgz);
-untar(tmptar,datadir);
-delete(tmptar);
-delete(tmpgz);
-
-
 %% Simple import, data with no known sensor locations
 
 S = [];
