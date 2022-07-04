@@ -3,6 +3,7 @@ testData/*.dat
 testData/*.gii
 testData/*.nii
 testData/*.lvm
+testData/cerca/*.dat
 testScripts/*.asv
 testScripts/*local.m
 junk/**

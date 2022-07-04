@@ -1,0 +1,11 @@
+MEG Data, recording complete REDACTED
+Operator: REDACTED
+Patient ID: 
+Ethics Code: 
+Experiment Type: Noise
+Room Degaussed: No
+Comments:  REDACTED
+Helmet: orange adult S
+OPM Gain: 1.00x
+Sensor Names:  Trigger 1 [Z], Trigger 2 [Z], Trigger 3 [Z], Trigger 4 [Z], Trigger 5 [Z], Trigger 6 [Z], Trigger 7 [Z], Trigger 8 [Z], LJ [Y], LJ [Z], BB [Y], BB [Z], BC [Y], BC [Z], BD [Y], BD [Z], BE [Y], BE [Z], LC [Y], LC [Z], BG [Y], BG [Z], LQ [Y], LQ [Z], L7 [Y], L7 [Z], LI [Y], LI [Z], BK [Y], BK [Z], LE [Y], LE [Z], BM [Y], BM [Z], L8 [Y], L8 [Z], BO [Y], BO [Z], BP [Y], BP [Z], BQ [Y], BQ [Z], LD [Y], LD [Z], LP [Y], LP [Z], LB [Y], LB [Z], LH [Y], LH [Z], LL [Y], LL [Z], BW [Y], BW [Z], LN [Y], LN [Z], L9 [Y], L9 [Z], LM [Y], LM [Z], LK [Y], LK [Z], C1 [Y], C1 [Z], C2 [Y], C2 [Z], C3 [Y], C3 [Z], C4 [Y], C4 [Z], C6 [Y], C6 [Z], C7 [Y], C7 [Z], LF [Y], LF [Z], C9 [Y], C9 [Z], CA [Y], CA [Z], D6 [Y], D6 [Z], CE [Y], CE [Z], CF [Y], CF [Z], CG [Y], CG [Z], CH [Y], CH [Z], CI [Y], CI [Z], CJ [Y], CJ [Z], L5 [Y], L5 [Z], CL [Y], CL [Z], CM [Y], CM [Z], CN [Y], CN [Z], CO [Y], CO [Z], D5 [Y], D5 [Z], LO [Y], LO [Z], CR [Y], CR [Z], LG [Y], LG [Z], CT [Y], CT [Z], LA [Y], LA [Z], CV [Y], CV [Z], CW [Y], CW [Z], CX [Y], CX [Z], CY [Y], CY [Z], CZ [Y], CZ [Z], D0 [Y], D0 [Z], D1 [Y], D1 [Z], D2 [Y], D2 [Z], D3 [Y], D3 [Z], D4 [Y], D4 [Z]
+

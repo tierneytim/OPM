@@ -74,7 +74,9 @@ try % work out if data is a matrix or a file
         end
         Data = read_cMEG_data(args);
         S.channels = Data.channels;
-        S.positions = Data.position;
+        if isfield(Data,'position')
+			S.positions = Data.position;
+        end
         S.fs=Data.meg.SamplingFrequency;
         binData=0;
         S.data=Data.data;
