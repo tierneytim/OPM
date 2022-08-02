@@ -445,7 +445,7 @@ if(S.axis>2)
     
 end
 
-
+ori = ori./ repmat(sqrt(sum(ori.^2,2)),1,3);
 
 end
 
