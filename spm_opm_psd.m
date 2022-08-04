@@ -49,7 +49,7 @@ for i = 1:length(labs)
     end
 end
 chans = [S.D.selectchannels(regex), indchantype(S.D,labs)];
-
+labs = chanlabels(S.D,chans);
 %- set window
 %--------------------------------------------------------------------------
 fs = S.D.fsample();
