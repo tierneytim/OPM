@@ -127,7 +127,7 @@ if(S.trigNN)
     xq=Dnew.time();
     for i =1:ntrials(D)
         oldTrigs = D(trigInds,:,i)';
-        Dnew(trigInds,:,i) = interp1(x,oldTrigs,xq,'nearest');
+        Dnew(trigInds,:,i) = interp1(x,oldTrigs,xq,'nearest')';
     end
 end
 %-Save new downsampled M/EEG dataset

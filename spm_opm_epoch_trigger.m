@@ -35,8 +35,13 @@ else
     trigInds= strmatch('TRIG',cTypes);
 end
 nTrigs =length(trigInds);
-trigs=S.D(trigInds,:);
 
+% assume trigger is in first frequency of TF object
+if (transformtype(S.D)=='TF')
+    trigs=squeeze(S.D(trigInds,1,:));
+else
+trigs=squeeze(S.D(trigInds,:,:));
+end
 fprintf('%-40s: %30s\n',[num2str(nTrigs) ' Triggers channels identified'],spm('time'));
 
 if isfield(S, 'condLabels')
