@@ -60,7 +60,7 @@ ind = indchantype(D,'MEG');
 otherind = setdiff(1:size(D,1),ind);
 
 fprintf('Creating output dataset\n');
-outname = fullfile(path(D),['pow_' fname(D)]);
+outname = fullfile(path(D),['tf_' fname(D)]);
 pD = clone(S.D,outname,[size(D,1), size(S.band,1) size(D,2) 1], 0, 1);
 pD.save();
 

@@ -7,7 +7,7 @@ function [T] = spm_opm_sourcepow(S)
 %   S.basewin     - size of window in ms eg [-1500 0]  - Default: no Default              
 %   S.actwin      - size of window in ms eg [0 1500]   - Default: no Default              
 % Output:
-%   pD               - MEEG object (also written to disk)
+%   T              - matrix of T stats
 %__________________________________________________________________________
 % Copyright (C) 2018-2022 Wellcome Centre for Human Neuroimaging
 %
@@ -18,29 +18,39 @@ function [T] = spm_opm_sourcepow(S)
 %-Set default values
 %--------------------------------------------------------------------------
 errorMsg = 'an MEEG object must be supplied.';
-if ~isfield(S, 'D'),      error('an MEEG object must be supplied.'); end
-if ~isfield(S, 'basewin'),    error('a time window(ms) must be supplied.'); end
+if ~isfield(S, 'D'),         error('an MEEG object must be supplied.'); end
+if ~isfield(S, 'basewin'),   error('a time window(ms) must be supplied.'); end
 if ~isfield(S, 'actwin'),    error('a time window(ms) must be supplied.'); end
+if ~isfield(S, 'weighted'),  S.weighted =0; end
 
 %- Get source model
 %--------------------------------------------------------------------------
-nverts = length(S.D.inv{1}.forward.mesh.vert);
-[~,S.D] = spm_eeg_lgainmat(S.D,1:nverts);
-S.D.save();
+gainExists  = isfield(S.D.inv{1},'gainmat');
+if (~gainExists)
+    nverts = length(S.D.inv{1}.forward.mesh.vert);
+    [~,S.D] = spm_eeg_lgainmat(S.D,1:nverts);
+    S.D.save();
+end
 
 lgain = load(S.D.inv{1}.gainmat);
 indChans = indchannel(S.D,lgain.label);
 L=lgain.G;
 brain=gifti(S.D.inv{1}.mesh.tess_ctx);
 
-%- Get inversion(min norm here but does not necessarily have to be )
+%- Get inversion (min norm/sloreta here but does not necessarily have to be )
 %--------------------------------------------------------------------------
 Nsens=size(L,1);
 SNR2=100;
 lambda2=trace(L*L')/(Nsens*SNR2);
 temp=L*L'+lambda2*eye(Nsens);
-Linv=L'/temp;
+Linv = L'*(pinv(temp));
 
+if(S.weighted)
+    for i = 1:size(Linv,1)
+        w = (Linv(i,:)*L(:,i))^(-.5);
+        Linv(i,:)= w*Linv(i,:);
+    end
+end
 
 %- time window baseline
 %--------------------------------------------------------------------------
@@ -54,13 +64,13 @@ for i = 1:size(S.D,3)
         brainbase(j,i) = li*cb*lt;       
     end
 end
-brainbase2= (brainbase).^(1/4);
+brainbase2= sqrt(brainbase);%.^(1/4);
 
 %- time window activation
 %--------------------------------------------------------------------------
 T = zeros(size(L,2),size(S.actwin,1));
+con = T;
 for k = 1:size(S.actwin,1)
-    k
     interestinds = find(S.D.time()>=S.actwin(k,1)/1000 & S.D.time<=S.actwin(k,2)/1000);
     braininterest = zeros(size(Linv,1),size(S.D,3));
     for i = 1:size(S.D,3)
@@ -73,18 +83,22 @@ for k = 1:size(S.actwin,1)
     end
     
     
-    braininterest2= (braininterest).^(1/4);
+    braininterest2= sqrt(braininterest);%.^(1/4);
     delta = braininterest2-brainbase2;
     
     Z = mean(delta,2);
     se = std(delta,[],2)/sqrt(size(S.D,3));
     T(:,k)=  Z./se;
+    con(:,k) = Z;
 end
 
 maT = max(max(abs(T)));
 Tplot = T;
 Tplot(4336,:)=maT;
 Tplot(4686,:)=-maT;
+% conplot = con;
+% conplot(4336,:)=max(max(abs(con)));
+% conplot(4686,:)=conplot(4336,:);
 
 
 %for i = 1:size(T,2)
@@ -101,7 +115,6 @@ bl3 = uicontrol('Parent',ax.figure,'Style','text','Position',[240,25,100,23],...
                 'String','Time','BackgroundColor',ax.figure.Color);
             
 b.Callback = @(es,ed)spm_mesh_render('Overlay',ax,Tplot(:,round(es.Value))); 
-
 end
 
 
