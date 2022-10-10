@@ -38,7 +38,11 @@ nTrigs =length(trigInds);
 
 % assume trigger is in first frequency of TF object
 if (strcmp(transformtype(S.D),'TF'))
-    trigs=squeeze(S.D(trigInds,1,:));
+    if (nTrigs==1)
+    trigs=squeeze(S.D(trigInds,1,:))';
+    else
+        trigs=squeeze(S.D(trigInds,1,:));    
+    end
 else
 trigs=squeeze(S.D(trigInds,:,:));
 end
