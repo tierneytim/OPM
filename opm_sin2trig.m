@@ -1,4 +1,4 @@
-function Dout = opm_mic2trig(S)
+function Dout = opm_sin2trig(S)
 % Helper function for working with microphone data (not for SPM)
 % FORMAT D = opm_mic2trig(S)
 %
