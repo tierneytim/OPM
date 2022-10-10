@@ -5,7 +5,8 @@ function [T] = spm_opm_sourcepow(S)
 %  fields of S:
 %   S.D           - epoched, filtred SPM MEEG object   - Default: no Default
 %   S.basewin     - size of window in ms eg [-1500 0]  - Default: no Default              
-%   S.actwin      - size of window in ms eg [0 1500]   - Default: no Default              
+%   S.actwin      - size of window in ms eg [0 1500]   - Default: no Default
+%   S.SNR         - SNR of response(used to regualrise) - Default: 5 
 % Output:
 %   T              - matrix of T stats
 %__________________________________________________________________________
@@ -22,6 +23,8 @@ if ~isfield(S, 'D'),         error('an MEEG object must be supplied.'); end
 if ~isfield(S, 'basewin'),   error('a time window(ms) must be supplied.'); end
 if ~isfield(S, 'actwin'),    error('a time window(ms) must be supplied.'); end
 if ~isfield(S, 'weighted'),  S.weighted =0; end
+if ~isfield(S, 'SNR'),       S.SNR =5; end
+if ~isfield(S, 'bonf'),      S.bonf =0; end
 
 %- Get source model
 %--------------------------------------------------------------------------
@@ -40,7 +43,7 @@ brain=gifti(S.D.inv{1}.mesh.tess_ctx);
 %- Get inversion (min norm/sloreta here but does not necessarily have to be )
 %--------------------------------------------------------------------------
 Nsens=size(L,1);
-SNR2=100;
+SNR2=S.SNR^2;
 lambda2=trace(L*L')/(Nsens*SNR2);
 temp=L*L'+lambda2*eye(Nsens);
 Linv = L'*(pinv(temp));
@@ -96,9 +99,10 @@ maT = max(max(abs(T)));
 Tplot = T;
 Tplot(4336,:)=maT;
 Tplot(4686,:)=-maT;
-% conplot = con;
-% conplot(4336,:)=max(max(abs(con)));
-% conplot(4686,:)=conplot(4336,:);
+if(S.bonf)
+threshold = spm_uc_Bonf(.05,[1,size(S.D,3)],'T',size(L,2),1);
+    Tplot(abs(Tplot)<threshold)=0;
+end
 
 
 %for i = 1:size(T,2)
