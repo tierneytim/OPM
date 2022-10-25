@@ -9,7 +9,8 @@ function [tHelm] = spm_affine_opreg(S)
 %   S.headhelmetref - filepath/matrix(nchannels x timepoints)  - Default:required
 %   S.headfid
 %   S.headhelmetfid
-%   S.affine    
+%   S.affine  
+%   S.frontonly
 % Output:
 %  tHelm       - transformed helmet object
 %__________________________________________________________________________
@@ -17,8 +18,11 @@ function [tHelm] = spm_affine_opreg(S)
 
 % Tim Tierney
 % $Id$
-spm('FnBanner', mfilename);
 
+if ~isfield(S, 'sensreg'),               S.sensreg = 0; end
+if ~isfield(S, 'affine'),                S.affine = 1; end
+
+%   S.frontonly
 %-read and convert meshes to mm
 %--------------------------------------------------------------------------
 Native= gifti(S.headfile);
@@ -37,13 +41,14 @@ if inmetres
     helmet.vertices=helmet.vertices*1000;
 end
 
-% headhelmet = gifti('headhelmet.obj');
-% inmetres = sqrt(sum((max(headhelmet.vertices)-min(headhelmet.vertices)).^2))<10;
-% if inmetres
-%     headhelmet.vertices=headhelmet.vertices*1000;
-% end
-% mesh_plot(headhelmet, helmet)
+%%-  helmet --> head with helmet
+%--------------------------------------------------------------------------
+helm2headhelm = spm_eeg_inv_rigidreg(S.headhelmetref',S.helmetref');
 
+
+%-  head with helmet  --> head
+%--------------------------------------------------------------------------
+headhelm2head = spm_eeg_inv_rigidreg(S.headfid',S.headhelmetfid');
 
 %- templates 
 %--------------------------------------------------------------------------
@@ -56,24 +61,47 @@ fid_template = spm_eeg_fixpnt(ft_read_headshape(fullfile(spm('dir'), 'EEGtemplat
 head2templatescalp = spm_eeg_inv_rigidreg(fid_template.fid.pnt(1:3,:)',S.headfid');
 scalpTemplate6 = spm_mesh_transform(Native,head2templatescalp);
 
+%- sensors --> template (6 paramater)
+%--------------------------------------------------------------------------
+sens = helmetInfo.Helmet_info.sens_pos;
+inmetres = sqrt(sum((max(sens)-min(sens)).^2))<10;
+if inmetres
+   sens=sens*1000;
+end
+senstemplate6 = spm_mesh_transform(sens,head2templatescalp*headhelm2head*helm2headhelm);
+
 %- cut everything below the ears off of scanned mesh
 %--------------------------------------------------------------------------
 p = double(scalpTemplate6.vertices);
 cut = min(fid_template.fid.pnt(1:3,3));
 p(p(:,3)<cut,:) =[];
 
-%- affine registration (12 paramater) (uniform scaling)
+%- cut everything  left and right of scalp mesh
 %--------------------------------------------------------------------------
+ml = min(scalp.vertices);
+mr = max(scalp.vertices);
+cut = (p(:,1)<ml(1)) | (p(:,1)>mr(1)) ;
+p(cut,:) =[];
+
+%- cut everything  behind the mesh
+%--------------------------------------------------------------------------
+ml = min(scalp.vertices);
+mr = max(scalp.vertices);
+cut = (p(:,2)<ml(2)) | (p(:,2)>mr(2)) ;
+p(cut,:) =[];
+
+
+%- affine registration (12 paramater) 
+
+%--------------------------------------------------------------------------
+if S.sensreg
+hmm= spm_eeg_inv_icp(double(scalp.vertices'),senstemplate6',[],[],[],[],S.affine);
+scalpTemplate12 = spm_mesh_transform(scalpTemplate6,hmm);
+else
 hmm= spm_eeg_inv_icp(double(scalp.vertices'),p',[],[],[],[],S.affine);
 scalpTemplate12 = spm_mesh_transform(scalpTemplate6,hmm);
+end
 
-%-  helmet --> head with helmet 
-%--------------------------------------------------------------------------
-helm2headhelm = spm_eeg_inv_rigidreg(S.headhelmetref',S.helmetref');
-
-%-  head with helmet  --> head
-%--------------------------------------------------------------------------
-headhelm2head = spm_eeg_inv_rigidreg(S.headfid',S.headhelmetfid');
 
 %-  sensors to template 
 %--------------------------------------------------------------------------
@@ -81,6 +109,8 @@ sens2temp= hmm*head2templatescalp*headhelm2head*helm2headhelm;
 sens=[];
 sens.vertices =  helmetInfo.Helmet_info.sens_pos*1000;
 senstemplate = spm_mesh_transform(sens,sens2temp);
+helmettemplate = spm_mesh_transform(helmet,sens2temp);
+
 
 %-  check registration
 %--------------------------------------------------------------------------
@@ -91,20 +121,32 @@ p1.vertices = scalpTemplate12.vertices;
 p2 = [];
 p2.faces = scalp.faces;
 p2.vertices = scalp.vertices;
+p3 = [];
+p3.vertices = helmettemplate.vertices; 
+p3.faces = helmettemplate.faces; 
+
+p4=[];
+p4.faces = brain.faces; 
+p4.vertice = brain.vertices; 
+
 
 f = figure()
 
 patch(p1,'FaceColor','red','FaceAlpha',1,'EdgeColor','none')
 hold on 
 patch(p2,'FaceColor','blue','FaceAlpha',.3,'EdgeColor','none')
+patch(p3,'FaceColor','green','FaceAlpha',.15,'EdgeColor','none')
+patch(p4,'FaceColor','black','FaceAlpha',1,'EdgeColor','none')
 
 ax = gca();
 camlight;
 camlight(-80,-10);
 hold on 
- p = senstemplate.vertices;
-plot3(p(:,1),p(:,2),p(:,3),'.y','MarkerSize',20)
+ sensp = senstemplate.vertices;
+plot3(sensp(:,1),sensp(:,2),sensp(:,3),'.y','MarkerSize',20)
+%plot3(ps(:,1),ps(:,2),ps(:,3),'.b','MarkerSize',20)
 
+daspect([1,1,1])
 
 %-  save new sensor positions
 %--------------------------------------------------------------------------
