@@ -143,6 +143,8 @@ for j = 1:size(S.band,1)
     end
     pD.save();
 end
+delete(D);
+delete(fD);
 
 end
 
