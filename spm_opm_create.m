@@ -370,7 +370,7 @@ while fsize ~= ftell(fid)
         dims = [dims,temp];
     end
     I = I + 1;
-    temp = fread(fid,prod(dims),'double',0,'ieee-be');  % Skip the actual data (much faster for some reason)
+    fread(fid,prod(dims),'double',0,'ieee-be');  % Skip the actual data (much faster for some reason)
 end
 fseek(fid,0,'bof'); % Reset the cursor
 data1 = repmat({NaN*ones(dims)},I,1);  % Preallocate space, assumes each section is the same
@@ -404,7 +404,7 @@ for n = 1:size(data1,1)
 end
 
 %disp('Read session info')
-Session_info_file = [filename '_SessionInfo.txt'];
+Session_info_file = [filename(1:15) '_SessionInfo.txt'];
 fidSI = fopen(Session_info_file);
 finfoSI = dir(Session_info_file);
 fsizeSI = finfoSI.bytes;
@@ -422,8 +422,8 @@ for n = 1:size(Session_info,1)
     end
 end
 Chan_info_string = Session_info{Chan_info_string_id};
-cn1 = strsplit(Chan_info_string,', ');
-cn11 = strsplit(cn1{1},':  ');
+cn1 = strsplit(Chan_info_string,',\t');
+cn11 = strsplit(cn1{1},': \t');
 Chan_names = [cn11(2) cn1(2:end)]';
 
 disp('Create Cerca data structure')
@@ -433,6 +433,7 @@ Data.nsamples = size(data,2);
 Data.time = linspace(0,size(data,2)./Data.samp_frequency,size(data,2));
 Data.elapsed_time = Data.nsamples./Data.samp_frequency;
 Data.Chan_names = Chan_names;
+% another useless memory dump
 Data.data = data(2:end,:);
 
 
@@ -460,6 +461,7 @@ for n = 1:size(OPM_names,1)
 end
 
 OPM_data1 = Data.data;
+% another useless memory dump
 OPM_data1([tIdx;bncIdx],:) = [];
 gainIndex =  find(not(cellfun('isempty',strfind(Session_info,'OPM Gain'))));
 gain = Session_info{gainIndex};
@@ -470,18 +472,18 @@ gainFac= str2num((gainString{2}(1:4)));
 OPM_data1 = (1e6.*OPM_data1)./(2.7*gainFac);
 
 % OPM data in layout order
-load([fname(1:end-5) '_sensor_order.mat']);
+Lay = load([fname(1:end-5) '_sensor_order.mat']);
 
-loc_info = cell(size(T.Name));
+loc_info = cell(size(Lay.T.Name));
 OPM_data = [];
 sensornames = [];
 count = 0;
 bids = [];
 
-for n = 1:size(T,1)
+for n = 1:size(Lay.T,1)
     idx = [];
-    if ~isempty(T.Name{n})
-        sens_name = strsplit(T.Name{n});
+    if ~isempty(Lay.T.Name{n})
+        sens_name = strsplit(Lay.T.Name{n});
         idx = find(strcmpi(sens_name(1),Names_only));
         for m = 1:length(idx)
             count = count + 1;
