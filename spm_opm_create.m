@@ -327,6 +327,7 @@ if positions
     end
     D.save;
 end
+D.save();
 
 
 fprintf('%-40s: %30s\n','Completed',spm('time'));
