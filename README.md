@@ -126,6 +126,7 @@ Much of the low frequency noise is substantially reduced as well as the drift an
 D=spm_eeg_load('/path/to/testData/mf.mat');
 S=[];
 S.D=D;
+S.balance=0;
 [hfD, Yinds]=spm_opm_hfc(S);
 chans= chanlabels(mfD,Yinds);
 
