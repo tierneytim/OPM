@@ -4,6 +4,8 @@ function [f] = spm_opm_plotScalpData(S)
 %   S               - input structure
 %  fields of S:
 %   S.D             - SPM MEEG object                                - Default: no Default
+%   S.T             - time point to initalise to                    - Default: first sample  
+%   S.display       - string to deermine what is plotted   -Default: 'RADIAL'
 % OUTPUT:
 %   f          - the handle of the figure which displays the interpolated
 %                data
@@ -15,6 +17,7 @@ function [f] = spm_opm_plotScalpData(S)
 
 % Jean Daunizeau
 % Copyright (C) 2008-2022 Wellcome Centre for Human Neuroimaging
+if ~isfield(S, 'display'),        S.display = 'RADIAL'; end
 
 
 %- Select radial
@@ -29,9 +32,21 @@ cpos = bsxfun(@minus,pos,C);
 norm = sqrt(sum(cpos.^2,2));
 u = cpos./repmat(norm,1,3);
 radial = abs(sum(ori.*u,2))>.8;
+notrad = pos(~radial,:);
 pos = pos(radial,:);
+ChanLabel  = char(s.label(radial));
+Z=S.D(indchannel(S.D,cellstr(ChanLabel)),:,:);
+notLabel  = char(s.label(~radial));
+notZ=S.D(indchannel(S.D,cellstr(notLabel)),:,:);
+
 %- Select norm
 %--------------------------------------------------------------------------
+if (strmatch(S.display,'NORM'))
+  for i = 1:size(pos,1)
+    otherChan =sum(abs(bsxfun(@minus,notrad,pos(i,:))),2)<.001;
+    Z(i,:)=sqrt(Z(i,:).^2+sum(notZ(otherChan,:).^2,1));
+  end
+end
 
 %- infer axis
 %--------------------------------------------------------------------------
@@ -41,8 +56,6 @@ pos = pos(radial,:);
 
 
 
-ChanLabel  = char(s.label(radial));
-Z=S.D(indchannel(S.D,cellstr(ChanLabel)),:,:);
 
 ParentAxes = [];
 f          = [];
@@ -80,9 +93,15 @@ x       = xmin:dx:xmax;
 y       = ymin:dy:ymax;
 [XI,YI] = meshgrid(x,y);
 
-if(size(cZ,2)>1)
-    cZ = Z(:,1);
+if(size(cZ,2)>1 && isfield(S,'T'))
+[~,ind]=min(abs(S.D.time-S.T));
+  cZ = Z(:,ind);
+  T = S.D.time(ind);
+else 
+  cZ = Z(:,1);
+  T = S.D.time(1);
 end
+
 ZI      = griddata(cpos(1,:)',cpos(2,:)',full(double(cZ')),XI,YI);
 
 try
@@ -193,7 +212,7 @@ if size(Z,2)>1
  d.hti = uicontrol(f,...
         'style','text',...
         'BackgroundColor',COLOR,...
-        'string',[num2str(S.D.time()),' (','s',')'],...
+        'string',[num2str(T),' (','s',')'],...
         'position',[10    10    120    20]);
      d.hts = uicontrol(f,...
         'style','slider',...
@@ -204,7 +223,7 @@ if size(Z,2)>1
         'BusyAction','cancel',...
         'Interruptible','off');
      ze = zeros([size(Z),1]);
-    ze(:,:,1)=Z;   
+     ze(:,:,1)=Z;   
     set(f,'userdata',ze);
     d.in.handles.hfig=f;
     d.in.ind = 1:size(Z,1);
@@ -225,10 +244,11 @@ if ~noButtons
     set(d.hsn,'userdata',d);
 end
 set(d.ParentAxes,'userdata',d);
-caxis([-max(abs(Z(:))) max(abs(Z(:)))])
-
+if (~strmatch(S.display,'NORM'))
+  caxis([-max(abs(Z(:))) max(abs(Z(:)))])
 end
 
+end
 
 %==========================================================================
 % dFcn
@@ -343,49 +363,6 @@ xyz          = xyz - repmat(C,size(xyz,1),1);
 TH           = TH - mean(TH);
 [X,Y,Z]      = sph2cart(TH,zeros(size(TH)),RAD.*(cos(PHI+pi./2)+1));
 xy           = [X(:),Y(:)];
-end
-
-%==========================================================================
-% combineplanar
-%==========================================================================
-function [Z, pos, ChanLabel] = combineplanar(Z, pos, ChanLabel)
-
-if ~iscell(ChanLabel)
-    ChanLabel = cellstr(ChanLabel);
-end
-
-chanind = zeros(1, numel(ChanLabel));
-for i = 1:numel(ChanLabel)
-    chanind(i) = sscanf(ChanLabel{i}, 'MEG%d');
-end
-
-pairs = [];
-unpaired = [];
-paired = zeros(length(chanind));
-for i = 1:length(chanind)
-    if ~paired(i)
-
-        cpair = find(abs(chanind - chanind(i))<2);
-
-        if length(cpair) == 1
-            unpaired = [unpaired cpair];
-        else
-            pairs = [pairs; cpair(:)'];
-        end
-        paired(cpair) = 1;
-    end
-end
-
-if ~isempty(unpaired)
-    warning(['Could not pair all channels. Ignoring ' num2str(length(unpaired)) ' unpaired channels.']);
-end
-
-Z = sqrt(Z(pairs(:, 1)).^2 + Z(pairs(:, 2)).^2);
-pos = (pos(:, pairs(:, 1)) + pos(:, pairs(:, 2)))./2;
-ChanLabel = {};
-for i = 1:size(pairs,1)
-    ChanLabel{i} = ['MEG' num2str(min(pairs(i,:))) '+' num2str(max(pairs(i,:)))];
-end
 end
 
 %==========================================================================
