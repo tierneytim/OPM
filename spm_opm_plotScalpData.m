@@ -18,6 +18,7 @@ function [f] = spm_opm_plotScalpData(S)
 % Jean Daunizeau
 % Copyright (C) 2008-2022 Wellcome Centre for Human Neuroimaging
 if ~isfield(S, 'display'),        S.display = 'RADIAL'; end
+if ~isfield(S, 'noButtons'),      S.noButtons = 0; end
 
 
 %- Select radial
@@ -61,7 +62,7 @@ ParentAxes = [];
 f          = [];
 clim       = [min(Z(:))-( max(Z(:))-min(Z(:)) )/63 , max(Z(:))];
 figName    = 'Image Scalp data';
-noButtons  = 0;
+noButtons  = S.noButtons;
 in     = [];
 in.cbar = 1;
 in.plotpos = 1;
@@ -85,10 +86,10 @@ cChanLabel = ChanLabel;
 
 xmin    = min(cpos(1,:));
 xmax    = max(cpos(1,:));
-dx      = (xmax-xmin)./100;
+dx      = (xmax-xmin)./250;
 ymin    = min(cpos(2,:));
 ymax    = max(cpos(2,:));
-dy      = (ymax-ymin)./100;
+dy      = (ymax-ymin)./250;
 x       = xmin:dx:xmax;
 y       = ymin:dy:ymax;
 [XI,YI] = meshgrid(x,y);
@@ -144,7 +145,7 @@ fpos(1,:) = fpos(1,:) - xmin;
 fpos(2,:) = fpos(2,:) - ymin;
 fpos(1,:) = fpos(1,:)./(dx);
 fpos(2,:) = fpos(2,:)./(dy);
-fpos(2,:) = 100-fpos(2,:);  % for display purposes (flipud imagesc)
+fpos(2,:) = 250-fpos(2,:);  % for display purposes (flipud imagesc)
 
 figure(f);
 if in.plotpos
@@ -206,7 +207,7 @@ if ~isempty(in) && isfield(in,'handles')
     set(d.hts,'userdata',d);
 end
 
-if size(Z,2)>1
+if size(Z,2)>1 && S.noButtons~=1
  nT = size(Z,2);
  in.x = 1;
  d.hti = uicontrol(f,...

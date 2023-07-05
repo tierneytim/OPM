@@ -415,7 +415,7 @@ for n = 1:size(data1,1)
 end
 
 %disp('Read session info')
-Session_info_file = [filename(1:15) '_SessionInfo.txt'];
+Session_info_file = [filename(1:(end-8)) '_SessionInfo.txt'];
 fidSI = fopen(Session_info_file);
 finfoSI = dir(Session_info_file);
 fsizeSI = finfoSI.bytes;
@@ -426,7 +426,7 @@ while fsizeSI ~= ftell(fidSI)
 end
 fclose(fidSI);
 
-channels = spm_load([filename(1:15) '_channels.tsv']);
+channels = spm_load([filename(1:(end-8)) '_channels.tsv']);
 Chan_names = channels.name;
 for i = 1:size(Chan_names,1)
 basespl = strsplit(channels.name{i},'[');
