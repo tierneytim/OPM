@@ -1,10 +1,6 @@
 % sphere to evaluate harmonics on
 sp = spm_mesh_sphere(5);
 sp.vertices= sp.vertices*50;
-
-% non spherical surface 
-% sp = gifti([spm('dir'),'\canonical\scalp_2562.surf.gii']);
-
 nv = spm_mesh_normals(sp);
 
 % general solution
@@ -58,4 +54,3 @@ H= [H,L3];
      disp('VSM Test Failed');
  end
  
- sum(cs)/15-1
